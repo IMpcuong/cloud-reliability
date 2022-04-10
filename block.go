@@ -25,9 +25,9 @@ func NewGenesisBlock(starting string) *Block {
 
 // Create new block for the blockchain.
 func NewBlock(data string, prevBlockHash []byte) *Block {
-	newblock := &Block{[]byte{}, prevBlockHash, []byte(data), time.Now().Unix()}
-	newblock.GenerateHash()
-	return newblock
+	nblock := &Block{[]byte{}, prevBlockHash, []byte(data), time.Now().Unix()}
+	nblock.GenHash()
+	return nblock
 }
 
 // Utility functions start from here.
@@ -41,8 +41,8 @@ func (block *Block) Stringify() string {
 	return blockAsStr
 }
 
-// Create new hash generator for this current block.
-func (block *Block) GenerateHash() {
+// Create a hash generator for the new block.
+func (block *Block) GenHash() {
 	bTimeStamp := []byte(strconv.FormatInt(block.Timestamp, 10))
 	blockAsBytes := bytes.Join([][]byte{block.PrevBlockHash, block.Data, bTimeStamp}, []byte{})
 	hashValue := sha256.Sum256(blockAsBytes)
@@ -60,10 +60,10 @@ func (block *Block) Serialize() []byte {
 	return encoded
 }
 
-// Deserialize decode the given block's value from JSON formatter
+// DeserializeBlock decode the given block's value from JSON formatter
 // into the original data type using `json.Unmarshal()`.
-func (block *Block) Deserialize(encoded []byte) *Block {
-	block = new(Block)
+func DeserializeBlock(encoded []byte) *Block {
+	block := new(Block)
 	err := json.Unmarshal(encoded, block)
 	if err != nil {
 		Error.Printf("Unmarshal block failed!\n")

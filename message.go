@@ -16,6 +16,9 @@ const (
 	CResBlock   = "RES_BLOCK"    // Response to the requested fetch block contents.
 )
 
+// Using when commands stored as enums type.
+type MsgCmd int
+
 // `Message` is the method that's describe how data exchange between each node.
 type Message struct {
 	Cmd    string `json:"cmd"`      // Request command.
@@ -26,8 +29,8 @@ type Message struct {
 // Utility functions start from here.
 
 // Stringify invoked when message stored as enum type.
-func ToStrArray() []string {
-	codeAsStr := []string{
+func (pos MsgCmd) Stringify() string {
+	codeAsStr := [...]string{
 		"FW_HASH_LIST",
 		"REQ_DEPTH",
 		"REQ_BLOCK",
@@ -35,16 +38,39 @@ func ToStrArray() []string {
 		"ADD_BLOCK",
 		"RES_DEPTH",
 		"RES_BLOCK",
-	}
+	}[pos]
 	return codeAsStr
 }
 
+// CreateMsgFwHash used to forwards list of hashes from local node to other nodes.
+func CreateMsgFwHash(hashes [][]byte) *Message {
+	data, err := json.Marshal(hashes)
+	if err != nil {
+		Error.Panic("Marshal Failed!\n")
+		os.Exit(1)
+	}
+	return &Message{CFwHashList, data, GetLocalNode()}
+}
+
+// CreateMsgReqDepth returns a new request message to fetch
+// the current depth of a blockchain.
 func CreateMsgReqDepth() *Message {
 	return &Message{CReqDepth, nil, GetLocalNode()}
 }
 
+// CreateMsgReqBlock returns a new request message to fetch a block's contents.
+func CreateMsgReqBlock(pos int) *Message {
+	return &Message{CReqBlock, []byte(strconv.Itoa(pos)), GetLocalNode()}
+}
+
+// CreateMsgResDepth returns a message to response the fetch depth request.
 func CreateMsgResDepth(depth int) *Message {
 	return &Message{CResDepth, []byte(strconv.Itoa(depth)), GetLocalNode()}
+}
+
+// CreateMsgResBlock returns a message to response the fetch block request.
+func CreateMsgResBlock(block *Block) *Message {
+	return &Message{CResBlock, block.Serialize(), GetLocalNode()}
 }
 
 // Serialize encode the given message into JSON formatter using `json.Marshal()`.
@@ -57,10 +83,10 @@ func (msg *Message) Serialize() []byte {
 	return encoded
 }
 
-// Deserialize decode the given message from JSON formatter
+// DeserializeMsg decode the given message from JSON formatter
 // into the original data type using `json.Unmarshal()`.
-func (msg *Message) Deserialize(encoded []byte) *Message {
-	msg = new(Message)
+func DeserializeMsg(encoded []byte) *Message {
+	msg := new(Message)
 	err := json.Unmarshal(encoded, msg)
 	if err != nil {
 		Error.Printf("Unmarshal message failed!\n")

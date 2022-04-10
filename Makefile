@@ -1,20 +1,21 @@
 # Global variables
-GOCMD = go
-BINARY_NAME = pdp_bc.out
+GOCMD       = go
+BINARY_NAME = pdpapp
+EXTENSION   = exe
 
 # List of usual golang commands
 GOBUILD = $(GOCMD) build
 GOCLEAN = $(GOCMD) clean
-GOTIDY = $(GOCMD) mod tidy
-GOTEST = $(GOCMD) test
-GOGET = $(GOCMD) get
+GOTIDY  = $(GOCMD) mod tidy
+GOTEST  = $(GOCMD) test
+GOGET   = $(GOCMD) get
 
 # Default task
 all: build
 
 # Build task
 build:
-	$(GOBUILD) -o $(BINARY_NAME) -v
+	$(GOBUILD) -o $(BINARY_NAME).$(EXTENSION) -v
 
 # Test task
 test:
@@ -27,12 +28,12 @@ test:
 clean:
 	$(GOCLEAN)
 	$(GOTIDY)
-	powershell rm *.out
+	powershell rm $(BINARY_NAME).$(EXTENSION)
 
 # Run task
 run:
-	$(GOBUILD) -o $(BINARY_NAME) -v ./...
-	./$(BINARY_NAME)
+	$(GOBUILD) -o $(BINARY_NAME).$(EXTENSION) -v ./...
+	./$(BINARY_NAME).$(EXTENSION)
 
 # Dependencies
 deps:

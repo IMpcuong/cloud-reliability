@@ -2,11 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
 const (
+	DEFAULT_CFG_DIR  = "./config"
 	DEFAULT_CFG_PATH = "./config/config.json"
 )
 
@@ -53,4 +56,24 @@ func ImportNetworkCfg(path string) Config {
 		os.Exit(1)
 	}
 	return cfg
+}
+
+func IOReadDir(dir string) ([]string, error) {
+	if strings.Compare(dir, "") == 0 {
+		dir = DEFAULT_CFG_DIR
+	}
+	var files []string
+	fileInfo, err := ioutil.ReadDir(dir)
+	fmt.Printf("file info: %v\n", fileInfo)
+	if err != nil {
+		return files, err
+	}
+	for _, t := range fileInfo {
+		if !t.IsDir() {
+			files = append(files, dir+"/"+t.Name())
+		} else {
+			files, _ = IOReadDir(dir + "/" + t.Name())
+		}
+	}
+	return files, nil
 }

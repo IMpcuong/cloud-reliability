@@ -9,11 +9,11 @@ func NewCLIApp() *cli.App {
 	app.Name = "ImChain"
 	app.Usage = "Implementation Blockchain in GoLang"
 
-	InitStartServerCLI(app)
+	StartServerCLI(app)
 	return app
 }
 
-func InitStartServerCLI(app *cli.App) {
+func StartServerCLI(app *cli.App) {
 	var cfgPath string
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
@@ -25,24 +25,25 @@ func InitStartServerCLI(app *cli.App) {
 	}
 	app.Commands = []cli.Command{
 		{
-			Name:    "imstart",
+			Name:    "start",
 			Aliases: []string{"ims"},
 			Usage:   "start blockchain server",
 			Action: func(ctx *cli.Context) error {
-				ExecCmd(ctx, DEFAULT_CFG_PATH)
+				ExecCmd(ctx, cfgPath)
 				return nil
 			},
 		},
 	}
 }
 
+// ExecCmd executes the specified commands from the terminal.
 func ExecCmd(ctx *cli.Context, cfgPath string) {
 	InitNetworkCfg(cfgPath)
 
 	bc := PullNeighborBC()
 	if bc == nil || bc.IsEmpty() {
-		Info.Printf("Pull failed. Create new blockchain instead\n")
-		// bc = InitBlockchain()
+		Info.Printf("Pull failed. Create new blockchain instead.\n")
+		bc = InitBlockChain()
 	}
 	StartBCServer(bc)
 }

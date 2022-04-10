@@ -1,1 +1,6 @@
+# Folders or Directories.
 .vscode/
+
+# File names or file types.
+*.out
+*.exe

@@ -30,7 +30,7 @@ func InitBlockChain() *BlockChain {
 
 // Utility functions start from here.
 
-// Checking the chain empty or not.
+// Checking the chain is empty or not.
 func (bc *BlockChain) IsEmpty() bool {
 	return bc.Blocks == nil || bc.GetDepth() == 0
 }
@@ -40,7 +40,8 @@ func (bc *BlockChain) GetDepth() int {
 	return len(bc.Blocks)
 }
 
-// Adding new block to the chain by append older chain's slice with new block.
+// Adding new block from other node to the local chain
+// by append local chain's slice with this block.
 func (bc *BlockChain) AddBlock(data string) {
 	prevBlock := bc.Blocks[bc.GetDepth()-1]
 	newBlock := NewBlock(data, prevBlock.Hash)
@@ -79,10 +80,10 @@ func (bc BlockChain) Serialize() []byte {
 	return encoded
 }
 
-// Deserialize decode the chain's values from JSON formatter
+// DeserializeChain decode the chain's values from JSON formatter
 // into the original data type using `json.Unmarshal()`.
-func (bc *BlockChain) Deserialize(encoded []byte) *BlockChain {
-	bc = new(BlockChain)
+func DeserializeChain(encoded []byte) *BlockChain {
+	bc := new(BlockChain)
 	err := json.Unmarshal(encoded, bc)
 	if err != nil {
 		Error.Printf("Unmarshal chain failed!\n")
