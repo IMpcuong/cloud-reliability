@@ -38,6 +38,7 @@ run:
 # Dependencies
 deps:
 	$(GOGET) github.com/urfave/cli
+	$(GOGET) golang.org/x/exp/constraints
 
 # Update all dependencies
 update:

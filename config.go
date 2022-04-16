@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 const (
-	DEFAULT_CFG_DIR  = "./config"
-	DEFAULT_CFG_PATH = "./config/config.json"
+	DEFAULT_CFG_DIR  = "config"
+	DEFAULT_CFG_PATH = "config/config.json"
 )
 
 // Default variable of network configuration.
@@ -58,22 +59,41 @@ func ImportNetworkCfg(path string) Config {
 	return cfg
 }
 
-func IOReadDir(dir string) ([]string, error) {
-	if strings.Compare(dir, "") == 0 {
-		dir = DEFAULT_CFG_DIR
+func WalkCfgDir(cfgDir string) ([]string, error) {
+	if strings.Compare(cfgDir, "") == 0 {
+		cfgDir = DEFAULT_CFG_DIR
 	}
-	var files []string
-	fileInfo, err := ioutil.ReadDir(dir)
-	fmt.Printf("file info: %v\n", fileInfo)
+	var dirs []string
+	err := filepath.Walk(cfgDir, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			dirs = append(dirs, strings.ReplaceAll(path, `\`, `/`))
+		}
+		return nil
+	})
 	if err != nil {
-		return files, err
+		Error.Println(err)
 	}
-	for _, t := range fileInfo {
-		if !t.IsDir() {
-			files = append(files, dir+"/"+t.Name())
-		} else {
-			files, _ = IOReadDir(dir + "/" + t.Name())
+	return dirs, err
+}
+
+func ReadPaths(dirs []string) ([]string, error) {
+	// if strings.Compare(strings.Join(dirs, ""), "") == 0 {
+	// 	dirs = []string{DEFAULT_CFG_DIR}
+	// }
+	var filePaths []string
+	for _, dir := range dirs {
+		fileInfo, err := ioutil.ReadDir(dir)
+		if err != nil {
+			return filePaths, err
+		}
+		for _, file := range fileInfo {
+			if !file.IsDir() {
+				path := fmt.Sprintf("%s/%s", dir, file.Name())
+				filePaths = append(filePaths, path)
+			} else {
+				filePaths, err = ReadPaths([]string{dir + "/" + file.Name()})
+			}
 		}
 	}
-	return files, nil
+	return filePaths, nil
 }

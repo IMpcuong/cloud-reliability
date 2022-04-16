@@ -28,7 +28,7 @@ func StartBCServer(bc *BlockChain) {
 	}
 }
 
-// HandleReq handles all incoming cases of message's command from any connected node.
+// HandleReq handles all cases of incoming message's command from any connected node.
 func HandleReq(conn net.Conn, bc *BlockChain) {
 	buf := make([]byte, 1024)
 	len, err := conn.Read(buf)
@@ -58,16 +58,22 @@ func HandleReq(conn net.Conn, bc *BlockChain) {
 	conn.Close()
 }
 
+// HandleReqFwHash handles request forwards hashes list to all neighbor node.
 func HandleReqFwHash(conn net.Conn, bc *BlockChain, msg *Message) {
 	Info.Printf("BlockChain detected modification. Starting synchronize chain...")
 	ReqConnectBC(msg.Source, bc)
 }
 
+// HandleReqDepth handles the request asking for the others node's depth (blockchain)
+// for the synchronizing in the local node.
+// Response with the message of the other node's depth'.
 func HandleReqDepth(conn net.Conn, bc *BlockChain) {
 	resMsg := CreateMsgResDepth(bc.GetDepth())
 	conn.Write(resMsg.Serialize())
 }
 
+// HandleReqBlock handles the request of pulling block after checking the neighbor node's depth.
+// Response with the block was missing and sync it into the local node.
 func HandleReqBlock(conn net.Conn, bc *BlockChain, msg *Message) {
 	depth, err := strconv.Atoi(string(msg.Data))
 	if err != nil {
@@ -79,10 +85,12 @@ func HandleReqBlock(conn net.Conn, bc *BlockChain, msg *Message) {
 	conn.Write(resMsg.Serialize())
 }
 
+// HandlePrintChain handles the request of printing the chain's values in string format.
 func HandlePrintChain(bc *BlockChain) {
 	Info.Printf("%v", bc.Stringify())
 }
 
+// HandleAddBlock handles the request of adding new block to the chain.
 func HandleAddBlock(conn net.Conn, bc *BlockChain, msg *Message) {
 	bc.AddBlock(string(msg.Data))
 	FwHashes(bc)
