@@ -4,6 +4,16 @@ import (
 	cli "github.com/urfave/cli"
 )
 
+// Sample commands's flag to run with the specific configuration file (Windows OS only):
+// Note: the configuration path can be provided after the flag `-c` or `--config`.
+// 	Normal:
+// 		.\pdpapp.exe -c .\config\node1\config.json start
+// 	Verbose:
+//    .\pdpapp.exe --config .\config\node2\config.json start
+//	Aliases:
+// 		.\pdpapp.exe -c .\config\node2\config.json ims
+
+// NewCLIApp create the new CLI application with some custom commands.
 func NewCLIApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "ImChain"
@@ -13,13 +23,14 @@ func NewCLIApp() *cli.App {
 	return app
 }
 
+// StartServerCLI starts the blockchain server and connects to the network.
 func StartServerCLI(app *cli.App) {
 	var cfgPath string
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "config, c",
 			Value:       DEFAULT_CFG_PATH,
-			Usage:       "Load configuration from `FILE`",
+			Usage:       "Load configuration from specific `FILE`",
 			Destination: &cfgPath,
 		},
 	}

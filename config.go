@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	DEFAULT_NW_NODES = 3
 	DEFAULT_CFG_DIR  = "config"
 	DEFAULT_CFG_PATH = "config/config.json"
 )
@@ -59,6 +60,7 @@ func ImportNetworkCfg(path string) Config {
 	return cfg
 }
 
+// WalkCfgDir walks through the directory tree structure and returns all the sub-directories.
 func WalkCfgDir(cfgDir string) ([]string, error) {
 	if strings.Compare(cfgDir, "") == 0 {
 		cfgDir = DEFAULT_CFG_DIR
@@ -70,16 +72,18 @@ func WalkCfgDir(cfgDir string) ([]string, error) {
 		}
 		return nil
 	})
+	if Contains(dirs, DEFAULT_CFG_DIR) {
+		Remove(dirs, DEFAULT_CFG_DIR)
+	}
 	if err != nil {
 		Error.Println(err)
 	}
-	return dirs, err
+	return Unique(dirs), err
 }
 
+// ReadDir reads multiple directories as an argument
+// and return all the relative path of all config files.
 func ReadPaths(dirs []string) ([]string, error) {
-	// if strings.Compare(strings.Join(dirs, ""), "") == 0 {
-	// 	dirs = []string{DEFAULT_CFG_DIR}
-	// }
 	var filePaths []string
 	for _, dir := range dirs {
 		fileInfo, err := ioutil.ReadDir(dir)

@@ -72,7 +72,7 @@ func Bytestoi(val []byte) int {
 	return i
 }
 
-// Contains returns true if a slice contains the given value.
+// Contains returns true if slice `s` contains the given element `e`.
 func Contains[T comparable](s []T, e T) bool {
 	for _, v := range s {
 		if v == e {
@@ -80,4 +80,36 @@ func Contains[T comparable](s []T, e T) bool {
 		}
 	}
 	return false
+}
+
+// Remove the given element `e` from slice `s`.
+func Remove[T comparable](s []T, e T) []T {
+	if Contains(s, e) {
+		pos := IndexOf(s, e)
+		return append(s[:pos], s[pos+1:]...)
+	}
+	return s
+}
+
+// IndexOf returns the index of the first occurrence of the provided `e` in `s`.
+func IndexOf[T comparable](s []T, e T) int {
+	for pos, v := range s {
+		if e == v {
+			return pos
+		}
+	}
+	return -1
+}
+
+// Unique returns a unique slice with no duplicated values.
+func Unique[T comparable](s []T) []T {
+	unqMap := make(map[T]bool)
+	var res []T
+	for _, v := range s {
+		if _, ok := unqMap[v]; !ok {
+			unqMap[v] = true
+			res = append(res, v)
+		}
+	}
+	return res
 }

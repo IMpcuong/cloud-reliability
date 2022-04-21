@@ -66,7 +66,7 @@ func HandleReqFwHash(conn net.Conn, bc *BlockChain, msg *Message) {
 
 // HandleReqDepth handles the request asking for the others node's depth (blockchain)
 // for the synchronizing in the local node.
-// Response with the message of the other node's depth'.
+// Response with the message of the other node's depth.
 func HandleReqDepth(conn net.Conn, bc *BlockChain) {
 	resMsg := CreateMsgResDepth(bc.GetDepth())
 	conn.Write(resMsg.Serialize())
@@ -79,7 +79,7 @@ func HandleReqBlock(conn net.Conn, bc *BlockChain, msg *Message) {
 	if err != nil {
 		Error.Print(err.Error())
 	}
-	idx := depth - 1024
+	idx := depth - 1
 	block := bc.Blocks[idx]
 	resMsg := CreateMsgResBlock(block)
 	conn.Write(resMsg.Serialize())

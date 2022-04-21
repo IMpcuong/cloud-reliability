@@ -26,9 +26,14 @@ test:
 .PHONY: clean
 # Clean task
 clean:
+ifeq ("$(wildcard $($(BINARY_NAME).$(EXTENSION)))", "")
 	$(GOCLEAN)
 	$(GOTIDY)
 	powershell rm $(BINARY_NAME).$(EXTENSION)
+else
+	$(GOCLEAN)
+	$(GOTIDY)
+endif
 
 # Run task
 run:
