@@ -28,6 +28,7 @@ func TestFilePathAnyDir(t *testing.T) {
 func TestIOReadFilePath(t *testing.T) {
 	expected := []string{"node1", "node2", "node3"}
 	files, _ := WalkCfgDir("")
+	fmt.Printf("=====> %v\n", files)
 	actual, err := ReadPaths(files)
 	if err != nil {
 		t.Errorf("Cannot read directory!")
