@@ -9,7 +9,7 @@ import (
 // 	Normal:
 // 		.\pdpapp.exe -c .\config\node1\config.json start
 // 	Verbose:
-//    .\pdpapp.exe --config .\config\node2\config.json start
+//		.\pdpapp.exe --config .\config\node2\config.json start
 //	Aliases:
 // 		.\pdpapp.exe -c .\config\node2\config.json ims
 
