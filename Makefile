@@ -11,13 +11,16 @@ GOTEST  = $(GOCMD) test
 GOGET   = $(GOCMD) get
 
 # Default task
+.PHONY: all
 all: build
 
 # Build task
+.PHONY: build
 build:
 	$(GOBUILD) -o $(BINARY_NAME).$(EXTENSION) -v
 
 # Test task
+.PHONY: test
 test:
 	$(GOTEST) -v ./...
 
@@ -26,7 +29,7 @@ test:
 .PHONY: clean
 # Clean task
 clean:
-ifeq ("$(wildcard $($(BINARY_NAME).$(EXTENSION)))", "")
+ifneq ("$(wildcard *.exe)", "")
 	$(GOCLEAN)
 	$(GOTIDY)
 	powershell rm $(BINARY_NAME).$(EXTENSION)
@@ -36,15 +39,18 @@ else
 endif
 
 # Run task
+.PHONY: run
 run:
 	$(GOBUILD) -o $(BINARY_NAME).$(EXTENSION) -v ./...
 	./$(BINARY_NAME).$(EXTENSION)
 
 # Dependencies
+.PHONY: deps
 deps:
 	$(GOGET) github.com/urfave/cli
 	$(GOGET) golang.org/x/exp/constraints
 
 # Update all dependencies
+.PHONY: update
 update:
 	$(GOGET) -u

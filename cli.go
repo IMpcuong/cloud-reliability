@@ -13,19 +13,37 @@ import (
 //	Aliases:
 // 		.\pdpapp.exe -c .\config\node2\config.json ims
 
-// NewCLIApp create the new CLI application with some custom commands.
-func NewCLIApp() *cli.App {
+// newCLIApp create the new CLI application with some custom commands.
+func newCLIApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "ImChain"
 	app.Usage = "Implementation Blockchain in GoLang"
 
-	StartServerCLI(app)
+	startServerCLI(app)
 	return app
 }
 
-// StartServerCLI starts the blockchain server and connects to the network.
-func StartServerCLI(app *cli.App) {
+// startServerCLI starts the blockchain server and connects to the network.
+func startServerCLI(app *cli.App) {
 	var cfgPath string
+	app.Commands = []cli.Command{
+		{
+			Name:    "start",
+			Aliases: []string{"ims"},
+			Usage:   "start blockchain server",
+			Action: func(ctx *cli.Context) error {
+				execCmd(ctx, cfgPath)
+				if len(ctx.GlobalFlagNames()) > 0 {
+					if ctx.String("c") != "" || ctx.String("config") != "" {
+						cfgPath = ctx.String("config")
+					} else {
+						cfgPath = DEFAULT_CFG_PATH
+					}
+				}
+				return nil
+			},
+		},
+	}
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "config, c",
@@ -34,27 +52,16 @@ func StartServerCLI(app *cli.App) {
 			Destination: &cfgPath,
 		},
 	}
-	app.Commands = []cli.Command{
-		{
-			Name:    "start",
-			Aliases: []string{"ims"},
-			Usage:   "start blockchain server",
-			Action: func(ctx *cli.Context) error {
-				ExecCmd(ctx, cfgPath)
-				return nil
-			},
-		},
-	}
 }
 
-// ExecCmd executes the specified commands from the terminal.
-func ExecCmd(ctx *cli.Context, cfgPath string) {
-	InitNetworkCfg(cfgPath)
+// execCmd executes the specified commands from the terminal.
+func execCmd(ctx *cli.Context, cfgPath string) {
+	initNetworkCfg(cfgPath)
 
-	bc := PullNeighborBC()
+	bc := pullNeighborBC()
 	if bc == nil || bc.IsEmpty() {
 		Info.Printf("Pull failed. Create new blockchain instead.\n")
-		bc = InitBlockChain()
+		bc = initBlockChain()
 	}
-	StartBCServer(bc)
+	startBCServer(bc)
 }

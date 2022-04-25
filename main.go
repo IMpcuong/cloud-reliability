@@ -7,6 +7,6 @@ import (
 
 func main() {
 	GenerateLogger(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
-	cliApp := NewCLIApp()
+	cliApp := newCLIApp()
 	cliApp.Run(os.Args)
 }

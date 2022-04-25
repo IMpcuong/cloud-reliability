@@ -49,28 +49,28 @@ func CreateMsgFwHash(hashes [][]byte) *Message {
 		Error.Panic("Marshal Failed!\n")
 		os.Exit(1)
 	}
-	return &Message{CFwHashList, data, GetLocalNode()}
+	return &Message{CFwHashList, data, getLocalNode()}
 }
 
 // CreateMsgReqDepth returns a new request message to fetch
 // the current depth of a blockchain.
 func CreateMsgReqDepth() *Message {
-	return &Message{CReqDepth, nil, GetLocalNode()}
+	return &Message{CReqDepth, nil, getLocalNode()}
 }
 
 // CreateMsgReqBlock returns a new request message to fetch a block's contents.
 func CreateMsgReqBlock(pos int) *Message {
-	return &Message{CReqBlock, []byte(strconv.Itoa(pos)), GetLocalNode()}
+	return &Message{CReqBlock, []byte(strconv.Itoa(pos)), getLocalNode()}
 }
 
 // CreateMsgResDepth returns a message to response the fetch depth request.
 func CreateMsgResDepth(depth int) *Message {
-	return &Message{CResDepth, []byte(strconv.Itoa(depth)), GetLocalNode()}
+	return &Message{CResDepth, []byte(strconv.Itoa(depth)), getLocalNode()}
 }
 
 // CreateMsgResBlock returns a message to response the fetch block request.
 func CreateMsgResBlock(block *Block) *Message {
-	return &Message{CResBlock, block.Serialize(), GetLocalNode()}
+	return &Message{CResBlock, block.Serialize(), getLocalNode()}
 }
 
 // Serialize encode the given message into JSON formatter using `json.Marshal()`.
@@ -83,9 +83,9 @@ func (msg *Message) Serialize() []byte {
 	return encoded
 }
 
-// DeserializeMsg decode the given message from JSON formatter
+// deserializeMsg decode the given message from JSON formatter
 // into the original data type using `json.Unmarshal()`.
-func DeserializeMsg(encoded []byte) *Message {
+func deserializeMsg(encoded []byte) *Message {
 	msg := new(Message)
 	err := json.Unmarshal(encoded, msg)
 	if err != nil {

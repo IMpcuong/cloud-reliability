@@ -7,9 +7,9 @@ import (
 	"strconv"
 )
 
-// StartBCServer turn on the BlockChain network server.
-func StartBCServer(bc *BlockChain) {
-	cfg := GetNetworkCfg()
+// startBCServer turn on the BlockChain network server.
+func startBCServer(bc *BlockChain) {
+	cfg := getNetworkCfg()
 	listener, err := net.Listen("tcp", cfg.Network.LocalNode.Address)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -37,20 +37,20 @@ func HandleReq(conn net.Conn, bc *BlockChain) {
 		return
 	}
 
-	msg := DeserializeMsg(buf[:len])
+	msg := deserializeMsg(buf[:len])
 	Info.Printf("Handle command %s request from port: %s\n", msg.Cmd, conn.RemoteAddr())
 
 	switch msg.Cmd {
 	case CFwHashList:
-		HandleReqFwHash(conn, bc, msg)
+		handleReqFwHash(conn, bc, msg)
 	case CReqDepth:
-		HandleReqDepth(conn, bc)
+		handleReqDepth(conn, bc)
 	case CReqBlock:
-		HandleReqBlock(conn, bc, msg)
+		handleReqBlock(conn, bc, msg)
 	case CPrintChain:
-		HandlePrintChain(bc)
+		handlePrintChain(bc)
 	case CAddBlock:
-		HandleAddBlock(conn, bc, msg)
+		handleAddBlock(conn, bc, msg)
 	default:
 		Info.Printf("Command message is invalid!\n")
 	}
@@ -58,23 +58,23 @@ func HandleReq(conn net.Conn, bc *BlockChain) {
 	conn.Close()
 }
 
-// HandleReqFwHash handles request forwards hashes list to all neighbor node.
-func HandleReqFwHash(conn net.Conn, bc *BlockChain, msg *Message) {
+// handleReqFwHash handles request forwards hashes list to all neighbor node.
+func handleReqFwHash(conn net.Conn, bc *BlockChain, msg *Message) {
 	Info.Printf("BlockChain detected modification. Starting synchronize chain...")
-	ReqConnectBC(msg.Source, bc)
+	reqConnectBC(msg.Source, bc)
 }
 
-// HandleReqDepth handles the request asking for the others node's depth (blockchain)
+// handleReqDepth handles the request asking for the others node's depth (blockchain)
 // for the synchronizing in the local node.
 // Response with the message of the other node's depth.
-func HandleReqDepth(conn net.Conn, bc *BlockChain) {
+func handleReqDepth(conn net.Conn, bc *BlockChain) {
 	resMsg := CreateMsgResDepth(bc.GetDepth())
 	conn.Write(resMsg.Serialize())
 }
 
-// HandleReqBlock handles the request of pulling block after checking the neighbor node's depth.
+// handleReqBlock handles the request of pulling block after checking the neighbor node's depth.
 // Response with the block was missing and sync it into the local node.
-func HandleReqBlock(conn net.Conn, bc *BlockChain, msg *Message) {
+func handleReqBlock(conn net.Conn, bc *BlockChain, msg *Message) {
 	depth, err := strconv.Atoi(string(msg.Data))
 	if err != nil {
 		Error.Print(err.Error())
@@ -85,13 +85,13 @@ func HandleReqBlock(conn net.Conn, bc *BlockChain, msg *Message) {
 	conn.Write(resMsg.Serialize())
 }
 
-// HandlePrintChain handles the request of printing the chain's values in string format.
-func HandlePrintChain(bc *BlockChain) {
+// handlePrintChain handles the request of printing the chain's values in string format.
+func handlePrintChain(bc *BlockChain) {
 	Info.Printf("%v", bc.Stringify())
 }
 
-// HandleAddBlock handles the request of adding new block to the chain.
-func HandleAddBlock(conn net.Conn, bc *BlockChain, msg *Message) {
+// handleAddBlock handles the request of adding new block to the chain.
+func handleAddBlock(conn net.Conn, bc *BlockChain, msg *Message) {
 	bc.AddBlock(string(msg.Data))
-	FwHashes(bc)
+	fwHashes(bc)
 }

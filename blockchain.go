@@ -21,9 +21,9 @@ type BlockChain struct {
 }
 
 // Initialize the first block in the chain.
-func InitBlockChain() *BlockChain {
+func initBlockChain() *BlockChain {
 	once.Do(func() {
-		instantiatedChain = &BlockChain{[]*Block{NewGenesisBlock("Genesis Block")}}
+		instantiatedChain = &BlockChain{[]*Block{newGenesisBlock("Genesis Block")}}
 	})
 	return instantiatedChain
 }
@@ -44,7 +44,7 @@ func (bc *BlockChain) GetDepth() int {
 // by append local chain's slice with this block.
 func (bc *BlockChain) AddBlock(data string) {
 	prevBlock := bc.Blocks[bc.GetDepth()-1]
-	newBlock := NewBlock(data, prevBlock.Hash)
+	newBlock := newBlock(data, prevBlock.Hash)
 	bc.Blocks = append(bc.Blocks, newBlock)
 }
 
@@ -80,9 +80,9 @@ func (bc BlockChain) Serialize() []byte {
 	return encoded
 }
 
-// DeserializeChain decode the chain's values from JSON formatter
+// deserializeChain decode the chain's values from JSON formatter
 // into the original data type using `json.Unmarshal()`.
-func DeserializeChain(encoded []byte) *BlockChain {
+func deserializeChain(encoded []byte) *BlockChain {
 	bc := new(BlockChain)
 	err := json.Unmarshal(encoded, bc)
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 )
 
 func TestFilePathWalkDir(t *testing.T) {
-	actual, err := WalkCfgDir("")
+	actual, err := walkCfgDir("")
 	if err != nil {
 		t.Errorf("Cannot read directory!")
 	}
@@ -16,7 +16,7 @@ func TestFilePathWalkDir(t *testing.T) {
 }
 
 func TestFilePathAnyDir(t *testing.T) {
-	actual, err := WalkCfgDir(".")
+	actual, err := walkCfgDir(".")
 	if err != nil {
 		t.Errorf("Cannot read directory!")
 	}
@@ -27,9 +27,9 @@ func TestFilePathAnyDir(t *testing.T) {
 
 func TestIOReadFilePath(t *testing.T) {
 	expected := []string{"node1", "node2", "node3"}
-	files, _ := WalkCfgDir("")
+	files, _ := walkCfgDir("")
 	fmt.Printf("=====> %v\n", files)
-	actual, err := ReadPaths(files)
+	actual, err := readPaths(files)
 	if err != nil {
 		t.Errorf("Cannot read directory!")
 	}

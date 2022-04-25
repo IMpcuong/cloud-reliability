@@ -30,29 +30,29 @@ type Network struct {
 
 // Utility functions start from here.
 
-// GetNetwork returns the NetWork definition stored in the `config.json` file.
-func GetNetwork() Network {
-	cfg := GetNetworkCfg()
+// getNetwork returns the NetWork definition stored in the `config.json` file.
+func getNetwork() Network {
+	cfg := getNetworkCfg()
 	return cfg.Network
 }
 
-// GetLocalNode returns the LocalNode's data stored in the `config.json` file.
-func GetLocalNode() Node {
-	cfg := GetNetworkCfg()
+// getLocalNode returns the LocalNode's data stored in the `config.json` file.
+func getLocalNode() Node {
+	cfg := getNetworkCfg()
 	return cfg.Network.LocalNode
 }
 
-// PullNeighborBC pulls the neighbor blockchain from other node in
+// pullNeighborBC pulls the neighbor blockchain from other node in
 // the network and connect it with the local node.
-func PullNeighborBC() *BlockChain {
+func pullNeighborBC() *BlockChain {
 	var bc *BlockChain
 	Info.Printf("Pulling blockchain from other node in Network...")
-	nw := GetNetwork()
+	nw := getNetwork()
 
 	for i := 0; i < MAX_ASK_TIME; i++ {
 		for _, node := range nw.NeighborNodes {
 			if bc == nil || bc.IsEmpty() {
-				bc = ReqConnectBC(node, nil)
+				bc = reqConnectBC(node, nil)
 				if bc != nil && !bc.IsEmpty() {
 					Info.Printf("Pull blockchain succeeded. Current height: %d", bc.GetDepth())
 					return bc
@@ -66,7 +66,7 @@ func PullNeighborBC() *BlockChain {
 // ReqConnect send the connection request to the given node.
 // Connection succeeded if the given node was existed in the network
 // and its address is connectable.
-func ReqConnectBC(node Node, bc *BlockChain) *BlockChain {
+func reqConnectBC(node Node, bc *BlockChain) *BlockChain {
 	// Checking if the local node is empty or not.
 	// If it's empty, depth is equal `0`.
 	var localDepth int
@@ -78,7 +78,7 @@ func ReqConnectBC(node Node, bc *BlockChain) *BlockChain {
 	}
 
 	// Checking if the neighbor node's address is reachable or not.
-	neighborDepth, err := GetDepthNeighbor(node)
+	neighborDepth, err := getDepthNeighbor(node)
 	if err != nil {
 		return nil
 	}
@@ -108,26 +108,26 @@ func ReqConnectBC(node Node, bc *BlockChain) *BlockChain {
 		msgAsBytes := scanner.Bytes()
 
 		// Deserialize the bytes message to `*Message` response.
-		msgRes := DeserializeMsg(msgAsBytes)
-		block := DeserializeBlock(msgRes.Data)
+		msgRes := deserializeMsg(msgAsBytes)
+		block := deserializeBlock(msgRes.Data)
 		bc.Blocks = append(bc.Blocks, block)
 		localDepth++
 	}
 	return bc
 }
 
-// FwHashes forwards the new message's hash data to all neighbor nodes.
-func FwHashes(bc *BlockChain) {
-	nw := GetNetwork()
+// fwHashes forwards the new message's hash data to all neighbor nodes.
+func fwHashes(bc *BlockChain) {
+	nw := getNetwork()
 	for _, node := range nw.NeighborNodes {
 		msg := CreateMsgFwHash(bc.GetHashes())
 		SendMsg(msg, node)
 	}
 }
 
-// GetDepthNeighbor returns the depth of the given node
+// getDepthNeighbor returns the depth of the given node
 // that was connected with local node.
-func GetDepthNeighbor(node Node) (int, error) {
+func getDepthNeighbor(node Node) (int, error) {
 	msg := CreateMsgReqDepth()
 
 	// Checking if the node address/port is reachable or available.
@@ -151,7 +151,7 @@ func GetDepthNeighbor(node Node) (int, error) {
 	msgAsBytes := scanner.Bytes()
 
 	// Deserialize the bytes message to `*Message` response.
-	msgRes := DeserializeMsg(msgAsBytes)
+	msgRes := deserializeMsg(msgAsBytes)
 	neighborDepth, err := strconv.Atoi(string(msgRes.Data))
 	if err != nil {
 		Error.Printf("Error decoding message %s!", err.Error())

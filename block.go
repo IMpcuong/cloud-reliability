@@ -19,12 +19,12 @@ type Block struct {
 }
 
 // Create Genesis Block (starting point).
-func NewGenesisBlock(starting string) *Block {
-	return NewBlock(starting, []byte{})
+func newGenesisBlock(starting string) *Block {
+	return newBlock(starting, []byte{})
 }
 
 // Create new block for the blockchain.
-func NewBlock(data string, prevBlockHash []byte) *Block {
+func newBlock(data string, prevBlockHash []byte) *Block {
 	nblock := &Block{[]byte{}, prevBlockHash, []byte(data), time.Now().Unix()}
 	nblock.GenHash()
 	return nblock
@@ -60,9 +60,9 @@ func (block *Block) Serialize() []byte {
 	return encoded
 }
 
-// DeserializeBlock decode the given block's value from JSON formatter
+// deserializeBlock decode the given block's value from JSON formatter
 // into the original data type using `json.Unmarshal()`.
-func DeserializeBlock(encoded []byte) *Block {
+func deserializeBlock(encoded []byte) *Block {
 	block := new(Block)
 	err := json.Unmarshal(encoded, block)
 	if err != nil {

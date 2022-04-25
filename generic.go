@@ -50,8 +50,8 @@ func SortFiles(dir string) {
 	sort.Sort(ByModTime(fm))
 }
 
-// MinimalVal compares 2 int numbers to determine which one is smaller.
-func MinimalVal[T constraints.Ordered](dst, src T) T {
+// MinVal compares 2 int numbers to determine which one is smaller.
+func MinVal[T constraints.Ordered](dst, src T) T {
 	if dst < src {
 		return dst
 	}
@@ -72,8 +72,8 @@ func Bytestoi(val []byte) int {
 	return i
 }
 
-// Contains returns true if slice `s` contains the given element `e`.
-func Contains[T comparable](s []T, e T) bool {
+// contains returns true if slice `s` contains the given element `e`.
+func contains[T comparable](s []T, e T) bool {
 	for _, v := range s {
 		if v == e {
 			return true
@@ -82,17 +82,17 @@ func Contains[T comparable](s []T, e T) bool {
 	return false
 }
 
-// Remove the given element `e` from slice `s`.
-func Remove[T comparable](s []T, e T) []T {
-	if Contains(s, e) {
-		pos := IndexOf(s, e)
+// remove the given element `e` from slice `s`.
+func remove[T comparable](s []T, e T) []T {
+	if contains(s, e) {
+		pos := indexOf(s, e)
 		return append(s[:pos], s[pos+1:]...)
 	}
 	return s
 }
 
-// IndexOf returns the index of the first occurrence of the provided `e` in `s`.
-func IndexOf[T comparable](s []T, e T) int {
+// indexOf returns the index of the first occurrence of the provided `e` in `s`.
+func indexOf[T comparable](s []T, e T) int {
 	for pos, v := range s {
 		if e == v {
 			return pos
@@ -101,8 +101,8 @@ func IndexOf[T comparable](s []T, e T) int {
 	return -1
 }
 
-// Unique returns a unique slice with no duplicated values.
-func Unique[T comparable](s []T) []T {
+// unique returns a unique slice with no duplicated values.
+func unique[T comparable](s []T) []T {
 	unqMap := make(map[T]bool)
 	var res []T
 	for _, v := range s {
