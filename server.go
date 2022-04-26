@@ -24,12 +24,12 @@ func startBCServer(bc *BlockChain) {
 		if err != nil {
 			Error.Println("Error accept connection: ", err.Error())
 		}
-		go HandleReq(conn, bc)
+		go handleReq(conn, bc)
 	}
 }
 
-// HandleReq handles all cases of incoming message's command from any connected node.
-func HandleReq(conn net.Conn, bc *BlockChain) {
+// handleReq handles all cases of incoming message's command from any connected node.
+func handleReq(conn net.Conn, bc *BlockChain) {
 	buf := make([]byte, 1024)
 	len, err := conn.Read(buf)
 	if err != nil {
@@ -68,7 +68,7 @@ func handleReqFwHash(conn net.Conn, bc *BlockChain, msg *Message) {
 // for the synchronizing in the local node.
 // Response with the message of the other node's depth.
 func handleReqDepth(conn net.Conn, bc *BlockChain) {
-	resMsg := CreateMsgResDepth(bc.GetDepth())
+	resMsg := createMsgResDepth(bc.GetDepth())
 	conn.Write(resMsg.Serialize())
 }
 
@@ -81,7 +81,7 @@ func handleReqBlock(conn net.Conn, bc *BlockChain, msg *Message) {
 	}
 	idx := depth - 1
 	block := bc.Blocks[idx]
-	resMsg := CreateMsgResBlock(block)
+	resMsg := createMsgResBlock(block)
 	conn.Write(resMsg.Serialize())
 }
 

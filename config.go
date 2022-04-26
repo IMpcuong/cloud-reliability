@@ -52,18 +52,22 @@ func importNetworkCfg(path string) Config {
 		Error.Println(err.Error())
 	}
 	// Read all the sub-directories and returns relative paths
-	// from available config files for each nodes..
+	// from available config files for each nodes.
 	paths, err := readPaths(dirs)
 	if err != nil {
 		Error.Println(err.Error())
 	}
-	for d := 1; d <= len(dirs); d++ {
-		// Checking if the flag value equal to the `n1/2/3` format or not.
-		flag := fmt.Sprintf("%s%d", "n", d)
+	curNodes := len(dirs)
+	if curNodes < DEFAULT_NW_NODES {
+		curNodes = DEFAULT_NW_NODES
+	}
+	for node := 1; node <= curNodes; node++ {
+		// Checking if the flag value equal to the string formatter (n1/2/3) or not.
+		flag := fmt.Sprintf("%s%d", "n", node)
 		if path == flag {
 			// NOTE: config.json maybe change the position later,
 			// contemporary take the second place in total 3 config files in each node.
-			cfgPath = paths[d*3-2]
+			cfgPath = paths[node*3-2]
 		}
 	}
 	cfgFile, err := ioutil.ReadFile(cfgPath)

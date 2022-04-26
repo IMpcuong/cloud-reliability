@@ -85,7 +85,7 @@ func reqConnectBC(node Node, bc *BlockChain) *BlockChain {
 
 	// Checking if the local node's current block in the lastest position or not.
 	for localDepth < neighborDepth {
-		msg := CreateMsgReqBlock(localDepth + 1)
+		msg := createMsgReqBlock(localDepth + 1)
 		data := msg.Serialize()
 
 		// Checking if the node address/port is reachable or available.
@@ -120,15 +120,15 @@ func reqConnectBC(node Node, bc *BlockChain) *BlockChain {
 func fwHashes(bc *BlockChain) {
 	nw := getNetwork()
 	for _, node := range nw.NeighborNodes {
-		msg := CreateMsgFwHash(bc.GetHashes())
-		SendMsg(msg, node)
+		msg := createMsgFwHash(bc.GetHashes())
+		sendMsg(msg, node)
 	}
 }
 
 // getDepthNeighbor returns the depth of the given node
 // that was connected with local node.
 func getDepthNeighbor(node Node) (int, error) {
-	msg := CreateMsgReqDepth()
+	msg := createMsgReqDepth()
 
 	// Checking if the node address/port is reachable or available.
 	conn, err := net.Dial("tcp", node.Address)
@@ -159,8 +159,8 @@ func getDepthNeighbor(node Node) (int, error) {
 	return neighborDepth, nil
 }
 
-// SendMsg send new message to the the given node.
-func SendMsg(msg *Message, node Node) {
+// sendMsg send new message to the the given node.
+func sendMsg(msg *Message, node Node) {
 	conn, err := net.Dial("tcp", node.Address)
 	if err != nil {
 		Error.Printf("%s is not available!\n", node.Address)

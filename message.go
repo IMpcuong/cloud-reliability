@@ -42,8 +42,8 @@ func (pos MsgCmd) Stringify() string {
 	return codeAsStr
 }
 
-// CreateMsgFwHash used to forwards list of hashes from local node to other nodes.
-func CreateMsgFwHash(hashes [][]byte) *Message {
+// createMsgFwHash used to forwards list of hashes from local node to other nodes.
+func createMsgFwHash(hashes [][]byte) *Message {
 	data, err := json.Marshal(hashes)
 	if err != nil {
 		Error.Panic("Marshal Failed!\n")
@@ -52,24 +52,24 @@ func CreateMsgFwHash(hashes [][]byte) *Message {
 	return &Message{CFwHashList, data, getLocalNode()}
 }
 
-// CreateMsgReqDepth returns a new request message to fetch
+// createMsgReqDepth returns a new request message to fetch
 // the current depth of a blockchain.
-func CreateMsgReqDepth() *Message {
+func createMsgReqDepth() *Message {
 	return &Message{CReqDepth, nil, getLocalNode()}
 }
 
-// CreateMsgReqBlock returns a new request message to fetch a block's contents.
-func CreateMsgReqBlock(pos int) *Message {
+// createMsgReqBlock returns a new request message to fetch a block's contents.
+func createMsgReqBlock(pos int) *Message {
 	return &Message{CReqBlock, []byte(strconv.Itoa(pos)), getLocalNode()}
 }
 
-// CreateMsgResDepth returns a message to response the fetch depth request.
-func CreateMsgResDepth(depth int) *Message {
+// createMsgResDepth returns a message to response the fetch depth request.
+func createMsgResDepth(depth int) *Message {
 	return &Message{CResDepth, []byte(strconv.Itoa(depth)), getLocalNode()}
 }
 
-// CreateMsgResBlock returns a message to response the fetch block request.
-func CreateMsgResBlock(block *Block) *Message {
+// createMsgResBlock returns a message to response the fetch block request.
+func createMsgResBlock(block *Block) *Message {
 	return &Message{CResBlock, block.Serialize(), getLocalNode()}
 }
 

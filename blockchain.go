@@ -17,7 +17,7 @@ var (
 
 // Simple structure of the blockchain.
 type BlockChain struct {
-	Blocks []*Block // List of all blocks.
+	Blocks []*Block // Linked list represents all blocks.
 }
 
 // Initialize the first block in the chain.
