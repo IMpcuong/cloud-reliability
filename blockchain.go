@@ -5,9 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"runtime"
 	"strconv"
+	"syscall"
+	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/vrecan/death"
 )
 
 const (
@@ -26,10 +30,11 @@ type BlockchainIter struct {
 	Blockchain *Blockchain // Blockchain itself.
 }
 
-// Initialize the first block in the chain.
+// Initialize an empty blockchain and save it to the `DB_FILE`
+// if this file is not present yet.
 func initBlockChain() *Blockchain {
 	if dbExist(DB_FILE) {
-		fmt.Println("Blockchain already exists!")
+		fmt.Println("Blockchain database is already exists!")
 		return nil
 	}
 
@@ -89,7 +94,7 @@ func (bc *Blockchain) GetDepth() int {
 		return nil
 	})
 	if err != nil {
-		Error.Fatal(err)
+		Error.Panic(err)
 		return 0
 	}
 
@@ -158,7 +163,7 @@ func (bc *Blockchain) AddBlock(block *Block) {
 			lastBlock := deserializeBlock(encodedLastBlock)
 
 			if block.Header.Depth > lastBlock.Header.Depth &&
-				bytes.Compare(block.Header.PrevBlockHash, lastBlock.Header.PrevBlockHash) == 0 {
+				bytes.Equal(block.Header.PrevBlockHash, lastBlock.Header.PrevBlockHash) {
 				bc.PutBlock(bucket, block.Header.Hash, block.Serialize())
 			} else {
 				Error.Printf("Block is invalid! Failed to add block: \n%v\n", block)
@@ -177,7 +182,7 @@ func (bc *Blockchain) AddBlock(block *Block) {
 // PutBlock sets 2 pairs:
 // 	`(key, value)` = `(hash, data)`,
 // 	`(key, value)` = `("l", latest_hash)` (special pair)
-// from the newest block into the bucket.
+// from the newest block into the bucket (both pairs store inside latest block).
 // Remember that bucket is the place where all transactions are stored.
 // Each transaction is the pair of a key (block's hash) and a value (block's data)
 // except the special pair.
@@ -289,11 +294,22 @@ func getLocalBC() *Blockchain {
 		return nil
 	}
 
-	// Open the database storage file with `read-write` permission.
-	db, err := bolt.Open(DB_FILE, 0600, nil)
+	// Open or create a new database storage file with `read-write` permission.
+	// NOTE: Bolt cannot access multiple proccesses the same database at the same time.
+	db, err := bolt.Open(DB_FILE, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		Error.Fatal(err)
 	}
 
 	return &Blockchain{DB: db}
+}
+
+// closeDB forces the database to be closed.
+func closeDB(bc *Blockchain) {
+	d := death.NewDeath(syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	d.WaitForDeathWithFunc(func() {
+		defer os.Exit(1)
+		defer runtime.Goexit()
+		bc.DB.Close()
+	})
 }

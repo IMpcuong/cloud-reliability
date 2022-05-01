@@ -12,6 +12,8 @@ import (
 //		.\pdpapp.exe --config .\config\node2\config.json start
 //	Aliases:
 // 		.\pdpapp.exe -c .\config\node2\config.json ims
+// 	or
+// 		.\pdpapp.exe -c node2 ims (the rest using the same convention)
 
 // newCLIApp create the new CLI application with some custom commands.
 func newCLIApp() *cli.App {
@@ -58,6 +60,11 @@ func startServerCLI(app *cli.App) {
 func execCmd(ctx *cli.Context, cfgPath string) {
 	initNetworkCfg(cfgPath)
 
+	// If `DB_FILE` haven't existed, initialize an empty blockchain.
+	// Else, read this file to get the blockchain structure.
+
+	//@@@ FIXME: maybe root cause in here? Unfortunately, the answer is `YES`.
+	//@@@ Avoid multi-create/read database file at the same time.
 	bc := getLocalBC()
 	if bc == nil {
 		Info.Printf("Local blockchain database not found. Initialize empty blockchain instead.")
@@ -67,7 +74,7 @@ func execCmd(ctx *cli.Context, cfgPath string) {
 	}
 	syncNeighborBC(bc)
 
-	if bc.IsEmpty() {
+	if bc == nil || bc.IsEmpty() {
 		Info.Printf("Pull failed, no available node for synchronization. Create new blockchain instead.\n")
 		bc.AddBlock(newGenesisBlock())
 	}

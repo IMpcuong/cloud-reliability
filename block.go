@@ -29,7 +29,7 @@ func newGenesisBlock() *Block {
 	return newBlock("Genesis Block", []byte{}, 1)
 }
 
-// Create and append new block to the chain.
+// Create/Mine new block for the chain.
 func newBlock(data string, prevBlockHash []byte, curDepth int) *Block {
 	nHeader := Header{
 		PrevBlockHash: prevBlockHash,

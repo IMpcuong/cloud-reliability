@@ -50,6 +50,7 @@ deps:
 	$(GOGET) github.com/urfave/cli
 	$(GOGET) github.com/boltdb/bolt
 	$(GOGET) github.com/google/go-cmp/cmp
+	$(GOGET) github.com/vrecan/death/v3
 	$(GOGET) golang.org/x/exp/constraints
 
 # Update all dependencies

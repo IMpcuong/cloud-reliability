@@ -9,6 +9,8 @@ func TestInitBC(t *testing.T) {
 	if bc.IsEmpty() {
 		t.Errorf("Cannot initialize block chain!")
 	}
+	// NOTE: import to avoid static check of unused code.
+	deserializeChain(bc.Serialize())
 
 	// bc.AddBlock("IMpossible send 1 eth/btc to Batman")
 	// bc.AddBlock("Batman send 2 eth/btc to IMpossible")

@@ -50,8 +50,8 @@ func SortFiles(dir string) {
 	sort.Sort(ByModTime(fm))
 }
 
-// MinVal compares 2 integer numbers to determine which one is smaller.
-func MinVal[T constraints.Ordered](dst, src T) T {
+// minVal compares 2 integer numbers to determine which one is smaller.
+func minVal[T constraints.Ordered](dst, src T) T {
 	if dst < src {
 		return dst
 	}

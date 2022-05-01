@@ -3,10 +3,12 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"net"
 	"os"
 	"strconv"
+	"time"
 )
 
 const (
@@ -31,7 +33,7 @@ type Network struct {
 
 // Utility functions start from here.
 
-// getNetwork returns the NetWork definition stored in the `config.json` file.
+// getNetwork returns the Network definition stored in the `config.json` file.
 func getNetwork() Network {
 	cfg := getNetworkCfg()
 	return cfg.Network
@@ -43,8 +45,8 @@ func getLocalNode() Node {
 	return cfg.Network.LocalNode
 }
 
-// syncNeighborBC pulls the neighbor blockchain from other node in
-// the network and connect it with the local node.
+// syncNeighborBC pulls the neighbor blockchain from the other node in
+// the network and synchronizes the local node with it.
 func syncNeighborBC(bc *Blockchain) {
 	Info.Printf("Pulling blockchain from other node in Network...")
 	nw := getNetwork()
@@ -61,29 +63,23 @@ func syncNeighborBC(bc *Blockchain) {
 }
 
 // reqConnectBC send the connection request to the given node.
-// Connection succeeded if the given node was existed in the network
-// and its address is connectable.
+// Connection succeeded if the given node existed in the network,
+// its address is connectable, and the owner has fewer blocks identical to the other.
 func reqConnectBC(node Node, bc *Blockchain) bool {
 	// Checking if the local node is empty or not.
 	// If it's empty, depth is equal `0`.
-	var localDepth int
-	if bc == nil || bc.GetDepth() == 0 {
-		bc = new(Blockchain)
-		localDepth = 0
-	} else {
-		localDepth = bc.GetDepth()
-	}
+	localDepth := bc.GetDepth()
 
-	// Checking if the neighbor node's address is reachable or not.
+	// Retrieve the neighbor node's depth/length.
 	neighborDepth, err := getDepthNeighbor(node)
 	if err != nil {
 		return false
 	}
 
-	Info.Printf("Depth comparison between local node %v and neighbor node %v", localDepth, neighborDepth)
-	minDepth := MinVal(localDepth, neighborDepth)
+	Info.Printf("Depth comparison between local node %v - neighbor node %v", localDepth, neighborDepth)
+	minDepth := minVal(localDepth, neighborDepth)
 
-	// Compare the identical between the minimum of blocks from both sides.
+	// Compare the identical minimum of blocks from both sides.
 	for pos := 0; pos < minDepth; pos++ {
 		if cmpBlockWithNeighbor(bc.GetBlockByDepth(pos), node) {
 			Info.Printf("Block [%d] similarity detects completed. Progress: %d%%", pos, pos*100/minDepth)
@@ -99,10 +95,12 @@ func reqConnectBC(node Node, bc *Blockchain) bool {
 		Info.Printf("Pull [%d] blocks from neighbor node", neighborDepth-localDepth)
 		for pos := localDepth + 1; pos <= neighborDepth; pos++ {
 			pullBlockNeighbor(bc, node, pos)
+			// pullBlockNeighbor(bc, neighbor, localDepth+1)
 			Info.Printf("Pulled block [%d] completed. Progress: %d%%", pos, pos*100/neighborDepth)
 		}
 	} else {
-		// TODO: implement the pulling process in the case neighbor node have less blocks than the local.
+		// TODO: implement the pulling process in the case the neighbor node has fewer blocks than the local.
+		panic("Not implemented yet!")
 	}
 	return true
 }
@@ -207,15 +205,16 @@ func getDepthNeighbor(node Node) (int, error) {
 
 	// Scan the buffer data and convert it to bytes message.
 	scanner := bufio.NewScanner(bufio.NewReader(conn))
-	scanner.Scan()
+	ok := scanner.Scan()
+	if !ok {
+		return 0, nil
+	}
 	msgAsBytes := scanner.Bytes()
 
 	// Deserialize the bytes message to `*Message` response.
 	msgRes := deserializeMsg(msgAsBytes)
-	neighborDepth, err := strconv.Atoi(string(msgRes.Data))
-	if err != nil {
-		Error.Printf("Error decoding message %s!", err.Error())
-	}
+	neighborDepth := Bytestoi(msgRes.Data)
+
 	return neighborDepth, nil
 }
 
@@ -233,4 +232,18 @@ func sendMsg(msg *Message, node Node) {
 		Error.Panic(err)
 		return
 	}
+}
+
+// checkPort returns true if the connection to the given port is established.
+func checkPort(host, port string) bool {
+	timeout := time.Second
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
+	if err != nil {
+		return false
+	}
+	if conn != nil {
+		defer conn.Close()
+		fmt.Println("Opened!", net.JoinHostPort(host, port))
+	}
+	return true
 }

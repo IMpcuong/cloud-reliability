@@ -31,7 +31,7 @@ func getNetworkCfg() Config {
 }
 
 // initNetworkCfg initializes the network configurations from the config file
-// from the given source path.
+// with the given source path.
 func initNetworkCfg(cfgPathCLI string) {
 	var cfgPath string
 	if cfgPathCLI != "" {
@@ -51,31 +51,25 @@ func importNetworkCfg(path string) Config {
 	if err != nil {
 		Error.Println(err.Error())
 	}
+
 	// Read all the sub-directories and returns relative paths
 	// from available config files for each nodes.
-	paths, err := readPaths(dirs)
-	if err != nil {
-		Error.Println(err.Error())
-	}
-	curNodes := len(dirs)
-	if curNodes < DEFAULT_NW_NODES {
-		curNodes = DEFAULT_NW_NODES
-	}
-	for node := 1; node <= curNodes; node++ {
-		// Checking if the flag value equal to the string formatter (n1/2/3) or not.
-		flag := fmt.Sprintf("%s%d", "n", node)
-		if path == flag {
-			// NOTE: config.json maybe change the position later,
-			// contemporary take the second place in total 3 config files in each node.
-			cfgPath = paths[node*3-2]
+	for iNode, dir := range dirs {
+		paths, err := readPaths(dir)
+		if err != nil {
+			Error.Println(err.Error())
+		}
+
+		for _, filePath := range paths {
+			// Checking if the flag value equal to the string formatter (node1/2/3) or not.
+			flag := fmt.Sprintf("%s%d", "node", iNode+1)
+			if path == flag && strings.Contains(filePath, "config.json") {
+				cfgPath = filePath
+			}
 		}
 	}
-	cfgFile, err := ioutil.ReadFile(cfgPath)
-	if err != nil {
-		Error.Println(err.Error())
-		os.Exit(1)
-	}
 
+	cfgFile, err := readFile(cfgPath)
 	cfg := Config{}
 	err = json.Unmarshal(cfgFile, &cfg)
 	if err != nil {
@@ -106,23 +100,33 @@ func walkCfgDir(cfgDir string) ([]string, error) {
 	return unique(dirs), err
 }
 
-// readPaths reads multiple directories as an argument
+// readPaths reads given directory as an argument
 // and return the relative path of all config files.
-func readPaths(dirs []string) ([]string, error) {
+func readPaths(dir string) ([]string, error) {
 	var filePaths []string
-	for _, dir := range dirs {
-		fileInfo, err := ioutil.ReadDir(dir)
-		if err != nil {
-			return filePaths, err
-		}
-		for _, file := range fileInfo {
-			if !file.IsDir() {
-				path := fmt.Sprintf("%s/%s", dir, file.Name())
-				filePaths = append(filePaths, path)
-			} else {
-				filePaths, _ = readPaths([]string{dir + "/" + file.Name()})
-			}
+
+	fileInfo, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return filePaths, err
+	}
+	for _, file := range fileInfo {
+		if !file.IsDir() {
+			path := fmt.Sprintf("%s/%s", dir, file.Name())
+			filePaths = append(filePaths, path)
+		} else {
+			filePaths, _ = readPaths(dir + "/" + file.Name())
 		}
 	}
+
 	return filePaths, nil
+}
+
+// readFile reads the file contents from the given path.
+func readFile(path string) ([]byte, error) {
+	cfgFile, err := ioutil.ReadFile(path)
+	if err != nil {
+		Error.Println(err.Error())
+		os.Exit(1)
+	}
+	return cfgFile, nil
 }

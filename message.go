@@ -77,7 +77,7 @@ func createMsgReqDepth() *Message {
 // createMsgReqBlock returns a new request message to fetch a block's contents
 // from a specific position.
 func createMsgReqBlock(pos int) *Message {
-	return createMsg(CReqBlock, []byte(strconv.Itoa(pos)))
+	return createMsg(CReqBlock, Itobytes(pos))
 }
 
 // createMsgReqHeader returns a message to validate the given block's header.
@@ -89,7 +89,7 @@ func createMsgReqHeader(header Header) *Message {
 
 // createMsgResDepth returns a message to response the fetch depth request.
 func createMsgResDepth(depth int) *Message {
-	return createMsg(CResDepth, []byte(strconv.Itoa(depth)))
+	return createMsg(CResDepth, Itobytes(depth))
 }
 
 // createMsgResBlock returns a message to response the fetch block request.

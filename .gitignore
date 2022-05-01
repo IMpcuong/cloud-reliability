@@ -4,3 +4,5 @@
 # File names or file types.
 *.out
 *.exe
+blockchain.db
+blockchain.db.lock
