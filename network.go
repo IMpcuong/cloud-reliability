@@ -107,7 +107,7 @@ func reqConnectBC(node Node, bc *Blockchain) bool {
 	return true
 }
 
-// cmpBlockWithNeighbor returns true if 2 nodes's block with same the position have identical data.
+// cmpBlockWithNeighbor returns true if 2 nodes's block have the same the position have identical data.
 func cmpBlockWithNeighbor(block *Block, node Node) bool {
 	msg := createMsgReqHeader(block.Header)
 	data := msg.Serialize()
