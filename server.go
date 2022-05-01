@@ -5,10 +5,12 @@ import (
 	"net"
 	"os"
 	"strconv"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // startBCServer turn on the BlockChain network server.
-func startBCServer(bc *BlockChain) {
+func startBCServer(bc *Blockchain) {
 	cfg := getNetworkCfg()
 	listener, err := net.Listen("tcp", cfg.Network.LocalNode.Address)
 	if err != nil {
@@ -29,7 +31,7 @@ func startBCServer(bc *BlockChain) {
 }
 
 // handleReq handles all cases of incoming message's command from any connected node.
-func handleReq(conn net.Conn, bc *BlockChain) {
+func handleReq(conn net.Conn, bc *Blockchain) {
 	buf := make([]byte, 1024)
 	len, err := conn.Read(buf)
 	if err != nil {
@@ -47,6 +49,8 @@ func handleReq(conn net.Conn, bc *BlockChain) {
 		handleReqDepth(conn, bc)
 	case CReqBlock:
 		handleReqBlock(conn, bc, msg)
+	case CReqHeader:
+		handleReqHeader(conn, bc, msg)
 	case CPrintChain:
 		handlePrintChain(bc)
 	case CAddBlock:
@@ -59,7 +63,7 @@ func handleReq(conn net.Conn, bc *BlockChain) {
 }
 
 // handleReqFwHash handles request forwards hashes list to all neighbor node.
-func handleReqFwHash(conn net.Conn, bc *BlockChain, msg *Message) {
+func handleReqFwHash(conn net.Conn, bc *Blockchain, msg *Message) {
 	Info.Printf("BlockChain detected modification. Starting synchronize chain...")
 	reqConnectBC(msg.Source, bc)
 }
@@ -67,31 +71,40 @@ func handleReqFwHash(conn net.Conn, bc *BlockChain, msg *Message) {
 // handleReqDepth handles the request asking for the others node's depth (blockchain)
 // for the synchronizing in the local node.
 // Response with the message of the other node's depth.
-func handleReqDepth(conn net.Conn, bc *BlockChain) {
+func handleReqDepth(conn net.Conn, bc *Blockchain) {
 	resMsg := createMsgResDepth(bc.GetDepth())
 	conn.Write(resMsg.Serialize())
 }
 
 // handleReqBlock handles the request of pulling block after checking the neighbor node's depth.
 // Response with the block was missing and sync it into the local node.
-func handleReqBlock(conn net.Conn, bc *BlockChain, msg *Message) {
-	depth, err := strconv.Atoi(string(msg.Data))
+func handleReqBlock(conn net.Conn, bc *Blockchain, msg *Message) {
+	reqDepth, err := strconv.Atoi(string(msg.Data))
 	if err != nil {
 		Error.Print(err.Error())
 	}
-	idx := depth - 1
-	block := bc.Blocks[idx]
+	block := bc.GetBlockByDepth(reqDepth)
 	resMsg := createMsgResBlock(block)
 	conn.Write(resMsg.Serialize())
 }
 
+// handleReqHeader handles the header identical validation block between local and neighbor node.
+func handleReqHeader(conn net.Conn, bc *Blockchain, msg *Message) {
+	neighborHeader := deserializeHeader(msg.Data)
+	localBlock := bc.GetBlockByDepth(neighborHeader.Depth)
+	result := cmp.Equal(*neighborHeader, localBlock.Header)
+	resMsg := createMsgResHeader(result)
+	conn.Write(resMsg.Serialize())
+}
+
 // handlePrintChain handles the request of printing the chain's values in string format.
-func handlePrintChain(bc *BlockChain) {
+func handlePrintChain(bc *Blockchain) {
 	Info.Printf("%v", bc.Stringify())
 }
 
 // handleAddBlock handles the request of adding new block to the chain.
-func handleAddBlock(conn net.Conn, bc *BlockChain, msg *Message) {
-	bc.AddBlock(string(msg.Data))
+func handleAddBlock(conn net.Conn, bc *Blockchain, msg *Message) {
+	block := newBlock(string(msg.Data), bc.GetLatestHash(), bc.GetDepth()+1)
+	bc.AddBlock(block)
 	fwHashes(bc)
 }

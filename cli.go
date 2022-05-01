@@ -58,10 +58,20 @@ func startServerCLI(app *cli.App) {
 func execCmd(ctx *cli.Context, cfgPath string) {
 	initNetworkCfg(cfgPath)
 
-	bc := pullNeighborBC()
-	if bc == nil || bc.IsEmpty() {
-		Info.Printf("Pull failed. Create new blockchain instead.\n")
+	bc := getLocalBC()
+	if bc == nil {
+		Info.Printf("Local blockchain database not found. Initialize empty blockchain instead.")
 		bc = initBlockChain()
+	} else {
+		Info.Printf("Import blockchain database from local storage completed!")
 	}
+	syncNeighborBC(bc)
+
+	if bc.IsEmpty() {
+		Info.Printf("Pull failed, no available node for synchronization. Create new blockchain instead.\n")
+		bc.AddBlock(newGenesisBlock())
+	}
+
 	startBCServer(bc)
+	defer bc.DB.Close()
 }

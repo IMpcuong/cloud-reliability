@@ -14,7 +14,7 @@ import (
 type Utils interface {
 	Serialize() []byte
 	Deserialize(encoded []byte) *any
-	Block | BlockChain | Message
+	Block | Blockchain | Message
 }
 
 // ByModTime sorting files with the order of the last modification time.
@@ -50,7 +50,7 @@ func SortFiles(dir string) {
 	sort.Sort(ByModTime(fm))
 }
 
-// MinVal compares 2 int numbers to determine which one is smaller.
+// MinVal compares 2 integer numbers to determine which one is smaller.
 func MinVal[T constraints.Ordered](dst, src T) T {
 	if dst < src {
 		return dst

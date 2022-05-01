@@ -7,13 +7,16 @@ import (
 )
 
 const (
-	CFwHashList = "FW_HASH_LIST" // Forward the source hash list to other nodes.
+	CFwHashList = "FW_HASH_LIST" // Request to forward the source hash list to other nodes.
 	CReqDepth   = "REQ_DEPTH"    // Request to fetch the depth of the current node.
 	CReqBlock   = "REQ_BLOCK"    // Request to fetch the given block contents.
+	CReqHeader  = "REQ_HEADER"   // Request to fetch the given block's header to validate against the hash list.
 	CPrintChain = "PRINT_CHAIN"  // Request to print the blockchain from the given node.
 	CAddBlock   = "ADD_BLOCK"    // Request to add a new block to the given chain.
-	CResDepth   = "RES_DEPTH"    // Response to the requested fetch depth.
-	CResBlock   = "RES_BLOCK"    // Response to the requested fetch block contents.
+
+	CResDepth  = "RES_DEPTH"  // Response to the requested fetch depth.
+	CResBlock  = "RES_BLOCK"  // Response to the requested fetch block contents.
+	CResHeader = "RES_HEADER" // Response to the requested fetch header validation code.
 )
 
 // Using when commands stored as enums type.
@@ -34,13 +37,26 @@ func (pos MsgCmd) Stringify() string {
 		"FW_HASH_LIST",
 		"REQ_DEPTH",
 		"REQ_BLOCK",
+		"REQ_HEADER",
 		"PRINT_CHAIN",
 		"ADD_BLOCK",
 		"RES_DEPTH",
 		"RES_BLOCK",
+		"RES_HEADER",
 	}[pos]
 	return codeAsStr
 }
+
+// createMsg is the common method for creating a new message with a given code and data.
+func createMsg(cmd string, data []byte) *Message {
+	return &Message{
+		Cmd:    cmd,
+		Data:   data,
+		Source: getLocalNode(),
+	}
+}
+
+// Request Messagee:
 
 // createMsgFwHash used to forwards list of hashes from local node to other nodes.
 func createMsgFwHash(hashes [][]byte) *Message {
@@ -49,29 +65,44 @@ func createMsgFwHash(hashes [][]byte) *Message {
 		Error.Panic("Marshal Failed!\n")
 		os.Exit(1)
 	}
-	return &Message{CFwHashList, data, getLocalNode()}
+	return createMsg(CFwHashList, data)
 }
 
 // createMsgReqDepth returns a new request message to fetch
 // the current depth of a blockchain.
 func createMsgReqDepth() *Message {
-	return &Message{CReqDepth, nil, getLocalNode()}
+	return createMsg(CReqDepth, nil)
 }
 
-// createMsgReqBlock returns a new request message to fetch a block's contents.
+// createMsgReqBlock returns a new request message to fetch a block's contents
+// from a specific position.
 func createMsgReqBlock(pos int) *Message {
-	return &Message{CReqBlock, []byte(strconv.Itoa(pos)), getLocalNode()}
+	return createMsg(CReqBlock, []byte(strconv.Itoa(pos)))
 }
+
+// createMsgReqHeader returns a message to validate the given block's header.
+func createMsgReqHeader(header Header) *Message {
+	return createMsg(CReqHeader, header.Serialize())
+}
+
+// Response measages:
 
 // createMsgResDepth returns a message to response the fetch depth request.
 func createMsgResDepth(depth int) *Message {
-	return &Message{CResDepth, []byte(strconv.Itoa(depth)), getLocalNode()}
+	return createMsg(CResDepth, []byte(strconv.Itoa(depth)))
 }
 
 // createMsgResBlock returns a message to response the fetch block request.
 func createMsgResBlock(block *Block) *Message {
-	return &Message{CResBlock, block.Serialize(), getLocalNode()}
+	return createMsg(CResBlock, block.Serialize())
 }
+
+// createMsgResHeader returns a message containing the result of the checking validation header request.
+func createMsgResHeader(isValid bool) *Message {
+	return createMsg(CResHeader, []byte(strconv.FormatBool(isValid)))
+}
+
+// Utility functions start from here.
 
 // Serialize encode the given message into JSON formatter using `json.Marshal()`.
 func (msg *Message) Serialize() []byte {
