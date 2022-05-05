@@ -76,11 +76,12 @@ func reqConnectBC(node Node, bc *Blockchain) bool {
 		return false
 	}
 
-	Info.Printf("Depth comparison between local node %v - neighbor node %v", localDepth, neighborDepth)
+	Info.Printf("Depth comparison between [local - neighbor]: [%v - %v]", localDepth, neighborDepth)
 	minDepth := minVal(localDepth, neighborDepth)
 
 	// Compare the identical minimum of blocks from both sides.
-	for pos := 0; pos < minDepth; pos++ {
+	// NOTE: block position starts from index 1 not 0 like usual case.
+	for pos := 1; pos <= minDepth; pos++ {
 		if cmpBlockWithNeighbor(bc.GetBlockByDepth(pos), node) {
 			Info.Printf("Block [%d] similarity detects completed. Progress: %d%%", pos, pos*100/minDepth)
 		} else {
@@ -104,7 +105,7 @@ func reqConnectBC(node Node, bc *Blockchain) bool {
 	return true
 }
 
-// cmpBlockWithNeighbor returns true if 2 nodes's block have the same the position have identical data.
+// cmpBlockWithNeighbor returns true if blocks in the same position have identical data.
 func cmpBlockWithNeighbor(block *Block, node Node) bool {
 	msg := createMsgReqHeader(block.Header)
 	data := msg.Serialize()
@@ -233,9 +234,9 @@ func sendMsg(msg *Message, node Node) {
 	}
 }
 
-// checkPort returns true if the connection to the given port is established.
+// checkPort returns true if the connection to the given port was established.
 func checkPort(host, port string) bool {
-	timeout := time.Second
+	timeout := time.Duration(3) * time.Second
 	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
 	if err != nil {
 		return false

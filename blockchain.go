@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"syscall"
@@ -32,14 +33,15 @@ type BlockchainIter struct {
 
 // Initialize an empty blockchain and save it to the `DB_FILE`
 // if this file is not present yet.
-func initBlockChain() *Blockchain {
-	if dbExist(DB_FILE) {
+func initBlockChain(node string) *Blockchain {
+	absPath := getAbsPathDB(node)
+	if dbExist(absPath) {
 		fmt.Println("Blockchain database is already exists!")
 		return nil
 	}
 
 	// Open the database storage file with `read-write` permission.
-	db, err := bolt.Open(DB_FILE, 0600, nil)
+	db, err := bolt.Open(absPath, 0600, nil)
 	if err != nil {
 		Error.Fatal(err)
 	}
@@ -289,14 +291,15 @@ func dbExist(dbFile string) bool {
 
 // getLocalBC retrieves entire local blockchain information from the `DB_FILE`
 // if this file exists.
-func getLocalBC() *Blockchain {
-	if !dbExist(DB_FILE) {
+func getLocalBC(node string) *Blockchain {
+	absPath := getAbsPathDB(node)
+	if !dbExist(absPath) {
 		return nil
 	}
 
 	// Open or create a new database storage file with `read-write` permission.
 	// NOTE: Bolt cannot access multiple proccesses the same database at the same time.
-	db, err := bolt.Open(DB_FILE, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	db, err := bolt.Open(absPath, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		Error.Fatal(err)
 	}
@@ -312,4 +315,11 @@ func closeDB(bc *Blockchain) {
 		defer runtime.Goexit()
 		bc.DB.Close()
 	})
+}
+
+// getAbsPathDB returns the absolute path to the database storage file in the given node.
+//@@@ FIXME: this is a temporary solution, maybe automatically later.
+func getAbsPathDB(node string) string {
+	absPath := filepath.Join("config/", node, "/", DB_FILE)
+	return absPath
 }

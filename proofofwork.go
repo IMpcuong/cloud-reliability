@@ -64,7 +64,7 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	var hash [32]byte // 32 bytes = 256 bits.
 	nonce := 0
 
-	Info.Printf("Mining the block contains data: \"%v\"\n", pow.Block.Data)
+	Info.Printf("Mining process starting...")
 
 COUNTER: // for loop of the nonce counter in the range [0, 2^63-1]
 	for nonce < MAX_NONCE {

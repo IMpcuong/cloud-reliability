@@ -33,12 +33,12 @@ func newGenesisBlock() *Block {
 func newBlock(data string, prevBlockHash []byte, curDepth int) *Block {
 	nHeader := Header{
 		PrevBlockHash: prevBlockHash,
-		Hash:          []byte(data),
+		Hash:          []byte{},
 		Timestamp:     time.Now().Unix(),
 		Depth:         curDepth,
 		Nonce:         0,
 	}
-	nblock := &Block{nHeader, []byte{}}
+	nblock := &Block{nHeader, []byte(data)}
 	nblock.GenHash()
 	return nblock
 }

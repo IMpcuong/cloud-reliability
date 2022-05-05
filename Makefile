@@ -9,6 +9,7 @@ GOCLEAN = $(GOCMD) clean
 GOTIDY  = $(GOCMD) mod tidy
 GOTEST  = $(GOCMD) test
 GOGET   = $(GOCMD) get
+GOFMT   = $(GOCMD) fmt
 
 # Default task
 .PHONY: all
@@ -37,6 +38,11 @@ else
 	$(GOCLEAN)
 	$(GOTIDY)
 endif
+
+# Format task
+.PHONY: fmt
+fmt:
+	$(GOFMT)
 
 # Run task
 .PHONY: run

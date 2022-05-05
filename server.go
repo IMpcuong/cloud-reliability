@@ -18,7 +18,7 @@ func startBCServer(bc *Blockchain) {
 		os.Exit(1)
 	}
 	defer listener.Close()
-	go closeDB(bc) // Maybe this function is not needed anymore!
+	go closeDB(bc) //@@@ Maybe this function is not needed anymore!
 
 	Info.Println("Local Node listening on port: " + cfg.Network.LocalNode.Address)
 

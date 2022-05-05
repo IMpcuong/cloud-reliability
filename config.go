@@ -16,7 +16,10 @@ const (
 )
 
 // Default variable of network configuration.
-var nwConfig Config
+var (
+	nwConfig Config
+	// absPath  string
+)
 
 // Required configurations for the network.
 type Config struct {
@@ -70,6 +73,9 @@ func importNetworkCfg(path string) Config {
 	}
 
 	cfgFile, err := readFile(cfgPath)
+	if err != nil {
+		Error.Println(err.Error())
+	}
 	cfg := Config{}
 	err = json.Unmarshal(cfgFile, &cfg)
 	if err != nil {

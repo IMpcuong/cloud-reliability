@@ -16,7 +16,7 @@ const (
 
 	CResDepth  = "RES_DEPTH"  // Response to the requested fetch depth.
 	CResBlock  = "RES_BLOCK"  // Response to the requested fetch block contents.
-	CResHeader = "RES_HEADER" // Response to the requested fetch header validation code.
+	CResHeader = "RES_HEADER" // Response to the requested fetch header validation code with block's data.
 )
 
 // Using when commands stored as enums type.
@@ -71,7 +71,7 @@ func createMsgFwHash(hashes [][]byte) *Message {
 // createMsgReqDepth returns a new request message to fetch
 // the current depth of a blockchain.
 func createMsgReqDepth() *Message {
-	return createMsg(CReqDepth, nil)
+	return createMsg(CReqDepth, []byte{})
 }
 
 // createMsgReqBlock returns a new request message to fetch a block's contents

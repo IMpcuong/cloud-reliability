@@ -4,16 +4,17 @@ import (
 	cli "github.com/urfave/cli"
 )
 
-// Sample commands's flag to run with the specific configuration file (Windows OS only):
-// Note: the configuration path can be provided after the flag `-c` or `--config`.
-// 	Normal:
-// 		.\pdpapp.exe -c .\config\node1\config.json start
-// 	Verbose:
-//		.\pdpapp.exe --config .\config\node2\config.json start
-//	Aliases:
-// 		.\pdpapp.exe -c .\config\node2\config.json ims
-// 	or
-// 		.\pdpapp.exe -c node2 ims (the rest using the same convention)
+/*
+	Sample commands's flag to run with the specific configuration and database storage file:
+	Note: the configuration path can be provided after the flag `-c` or `--config`, `.exe`
+	      to make the binaries file executable in Windows environment.
+	Normal:
+ 		.\pdpapp.exe -c node1 -n node1 start
+ 	Verbose:
+		.\pdpapp.exe --config node1 --node node1 start
+	Aliases:
+ 		.\pdpapp.exe -c node2 -n node2 ims
+*/
 
 // newCLIApp create the new CLI application with some custom commands.
 func newCLIApp() *cli.App {
@@ -27,16 +28,19 @@ func newCLIApp() *cli.App {
 
 // startServerCLI starts the blockchain server and connects to the network.
 func startServerCLI(app *cli.App) {
-	var cfgPath string
+	var cfgPath, nodeDb string
+
 	app.Commands = []cli.Command{
 		{
 			Name:    "start",
 			Aliases: []string{"ims"},
 			Usage:   "start blockchain server",
 			Action: func(ctx *cli.Context) error {
-				execCmd(ctx, cfgPath)
+				execCmd(ctx, cfgPath, nodeDb)
 				if len(ctx.GlobalFlagNames()) > 0 {
-					if ctx.String("c") != "" || ctx.String("config") != "" {
+					if ctx.String("c") != "" {
+						cfgPath = ctx.String("c")
+					} else if ctx.String("config") != "" {
 						cfgPath = ctx.String("config")
 					} else {
 						cfgPath = DEFAULT_CFG_PATH
@@ -53,22 +57,27 @@ func startServerCLI(app *cli.App) {
 			Usage:       "Load configuration from specific `FILE`",
 			Destination: &cfgPath,
 		},
+		cli.StringFlag{
+			Name:        "node, n",
+			Value:       "",
+			Usage:       "Load database storage from specified `NODE`",
+			Destination: &nodeDb,
+		},
 	}
 }
 
 // execCmd executes the specified commands from the terminal.
-func execCmd(ctx *cli.Context, cfgPath string) {
-	initNetworkCfg(cfgPath)
+func execCmd(ctx *cli.Context, cfgPath ...string) {
+	// `cfg[0]` = path to the configuration file.
+	// `cfg[1]` = path to the database storage file.
+	initNetworkCfg(cfgPath[0])
 
 	// If `DB_FILE` haven't existed, initialize an empty blockchain.
 	// Else, read this file to get the blockchain structure.
-
-	//@@@ FIXME: maybe root cause in here? Unfortunately, the answer is `YES`.
-	//@@@ Avoid multi-create/read database file at the same time.
-	bc := getLocalBC()
+	bc := getLocalBC(cfgPath[1])
 	if bc == nil {
 		Info.Printf("Local blockchain database not found. Initialize empty blockchain instead.")
-		bc = initBlockChain()
+		bc = initBlockChain(cfgPath[1])
 	} else {
 		Info.Printf("Import blockchain database from local storage completed!")
 	}
