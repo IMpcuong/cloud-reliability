@@ -56,7 +56,7 @@ func createMsg(cmd string, data []byte) *Message {
 	}
 }
 
-// Request Messagee:
+// Request Messages:
 
 // createMsgFwHash used to forwards list of hashes from local node to other nodes.
 func createMsgFwHash(hashes [][]byte) *Message {
@@ -85,7 +85,7 @@ func createMsgReqHeader(header Header) *Message {
 	return createMsg(CReqHeader, header.Serialize())
 }
 
-// Response measages:
+// Response Messages:
 
 // createMsgResDepth returns a message to response the fetch depth request.
 func createMsgResDepth(depth int) *Message {
