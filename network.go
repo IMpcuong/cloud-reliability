@@ -91,11 +91,10 @@ func reqConnectBC(node Node, bc *Blockchain) bool {
 	Info.Println()
 
 	// Pull/Synchronize blocks from any side if the opposite side have more blocks than the other.
-	if localDepth < neighborDepth {
+	if localDepth <= neighborDepth {
 		Info.Printf("Pull [%d] blocks from neighbor node", neighborDepth-localDepth)
 		for pos := localDepth + 1; pos <= neighborDepth; pos++ {
 			pullBlockNeighbor(bc, node, pos)
-			// pullBlockNeighbor(bc, neighbor, localDepth+1)
 			Info.Printf("Pulled block [%d] completed. Progress: %d%%", pos, pos*100/neighborDepth)
 		}
 	} else {
