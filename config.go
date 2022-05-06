@@ -18,7 +18,6 @@ const (
 // Default variable of network configuration.
 var (
 	nwConfig Config
-	// absPath  string
 )
 
 // Required configurations for the network.
