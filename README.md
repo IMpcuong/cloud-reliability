@@ -6,6 +6,7 @@
 >
 > - Series: [Jeiwan.net - Author: Jeiwan](https://jeiwan.net/posts/building-blockchain-in-go-part-1/)
 > - Bitcoin: [Target in Bitcoin](https://learnmeabitcoin.com/technical/target)
+> - Go Blockchain: [bctd-repository](https://github.com/btcsuite/btcd)
 
 ### Windows:
 

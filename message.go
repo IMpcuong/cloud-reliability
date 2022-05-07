@@ -11,11 +11,13 @@ const (
 	CReqDepth   = "REQ_DEPTH"    // Request to fetch the depth of the current node.
 	CReqBlock   = "REQ_BLOCK"    // Request to fetch the given block contents.
 	CReqHeader  = "REQ_HEADER"   // Request to fetch the given block's header to validate against the hash list.
+	CReqAddr    = "REQ_ADDR"     // Request to get node's address.
 	CPrintChain = "PRINT_CHAIN"  // Request to print the blockchain from the given node.
 	CAddBlock   = "ADD_BLOCK"    // Request to add a new block to the given chain.
 
 	CResDepth  = "RES_DEPTH"  // Response to the requested fetch depth.
 	CResBlock  = "RES_BLOCK"  // Response to the requested fetch block contents.
+	CResAddr   = "RES_ADDR"   // Response to the requested fetch node's address.
 	CResHeader = "RES_HEADER" // Response to the requested fetch header validation code with block's data.
 )
 
@@ -31,7 +33,7 @@ type Message struct {
 
 // Utility functions start from here.
 
-// Stringify invoked when message stored as enum type.
+// Stringify invoked when message stored as enum type (unused yet).
 func (pos MsgCmd) Stringify() string {
 	codeAsStr := [...]string{
 		"FW_HASH_LIST",
@@ -85,6 +87,11 @@ func createMsgReqHeader(header Header) *Message {
 	return createMsg(CReqHeader, header.Serialize())
 }
 
+// createMsgReqAddr returns a new request message to fetch a node's address.
+func createMsgReqAddr() *Message {
+	return createMsg(CReqAddr, []byte{})
+}
+
 // Response Messages:
 
 // createMsgResDepth returns a message to response the fetch depth request.
@@ -100,6 +107,11 @@ func createMsgResBlock(block *Block) *Message {
 // createMsgResHeader returns a message containing the result of the checking validation header request.
 func createMsgResHeader(isValid bool) *Message {
 	return createMsg(CResHeader, []byte(strconv.FormatBool(isValid)))
+}
+
+// createMsgResAddr returns a message to response the fetch node's address request.
+func createMsgResAddr() *Message {
+	return createMsg(CResAddr, []byte{})
 }
 
 // Utility functions start from here.

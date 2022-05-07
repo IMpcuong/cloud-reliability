@@ -17,24 +17,40 @@ const (
 
 // Default variable of network configuration.
 var (
-	nwConfig Config
+	nwConfig *Config
 )
 
 // Required configurations for the network.
 type Config struct {
-	Network Network `json:"network"`
+	Network Network    `json:"network"` // Network configurations.
+	WJson   WalletJson `json:"wallet"`  // Address identification properties.
 }
 
 // Utility functions start from here.
 
+// ExportNetworkCfg export the network configuration to the given file path.
+func (cfg *Config) ExportNetworkCfg(filePath string) {
+	prettyMarshal, e := json.MarshalIndent(cfg, "", "  ")
+	if e != nil {
+		Error.Println(e.Error())
+		os.Exit(1)
+	}
+
+	e = ioutil.WriteFile(filePath, prettyMarshal, 0644)
+	if e != nil {
+		Error.Println(e.Error())
+		os.Exit(1)
+	}
+}
+
 // Get default network configurations.
-func getNetworkCfg() Config {
+func getNetworkCfg() *Config {
 	return nwConfig
 }
 
 // initNetworkCfg initializes the network configurations from the config file
 // with the given source path.
-func initNetworkCfg(cfgPathCLI string) {
+func initNetworkCfg(cfgPathCLI string) *Config {
 	var cfgPath string
 	if cfgPathCLI != "" {
 		cfgPath = cfgPathCLI
@@ -42,11 +58,16 @@ func initNetworkCfg(cfgPathCLI string) {
 		cfgPath = DEFAULT_CFG_PATH
 	}
 	nwConfig = importNetworkCfg(cfgPath)
+	return nwConfig
 }
 
 // importNetworkCfg reads the configuration from file in given `path` (flag value)
 // and returns the network configuration.
-func importNetworkCfg(path string) Config {
+func importNetworkCfg(path string) *Config {
+	if (strings.Compare(path, DEFAULT_CFG_PATH)) == 0 {
+		return getCfgData(path)
+	}
+
 	var cfgPath string
 	// Walk through the default config directory and returns all the sub-directories.
 	dirs, err := walkCfgDir("")
@@ -70,18 +91,7 @@ func importNetworkCfg(path string) Config {
 			}
 		}
 	}
-
-	cfgFile, err := readFile(cfgPath)
-	if err != nil {
-		Error.Println(err.Error())
-	}
-	cfg := Config{}
-	err = json.Unmarshal(cfgFile, &cfg)
-	if err != nil {
-		Error.Println(err.Error())
-		os.Exit(1)
-	}
-	return cfg
+	return getCfgData(cfgPath)
 }
 
 // walkCfgDir walks through the directory tree structure and returns all the sub-directories.
@@ -134,4 +144,16 @@ func readFile(path string) ([]byte, error) {
 		os.Exit(1)
 	}
 	return cfgFile, nil
+}
+
+// getCfgData returns the configuration data corresponding to the given path.
+func getCfgData(path string) *Config {
+	cfgFile, _ := readFile(path)
+	cfg := Config{}
+	err := json.Unmarshal(cfgFile, &cfg)
+	if err != nil {
+		Error.Println(err.Error())
+		os.Exit(1)
+	}
+	return &cfg
 }

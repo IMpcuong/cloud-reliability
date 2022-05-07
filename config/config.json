@@ -1,1 +1,13 @@
-{}
+{
+  "network": {
+    "local_node": {
+      "address": ""
+    },
+    "neighbor_nodes": null
+  },
+  "wallet": {
+    "private_key": "3345204bb3bae40985dd1fece63d28382d7dc5fe87c074d55b13110e1a1e29a8",
+    "public_key": "3b6eb39072a56c1e64df877fa0bb756ef92986d35dcce4bae7659f547d7b1e918c112c17202da27b2c46451eac4266ed5c26b5590dbbd2cd996d82df5a77b2c6",
+    "address": "1KEyrFXySHx8bv9PZNG4dFNBwCNkb5xeeN"
+  }
+}

@@ -63,6 +63,8 @@ func handleReq(conn net.Conn, bc *Blockchain) {
 		handleReqBlock(conn, bc, msg)
 	case CReqHeader:
 		handleReqHeader(conn, bc, msg)
+	case CReqAddr:
+		handleReqAddr(conn, msg)
 	case CPrintChain:
 		handlePrintChain(bc)
 	case CAddBlock:
@@ -104,6 +106,13 @@ func handleReqHeader(conn net.Conn, bc *Blockchain, msg *Message) {
 	result := cmp.Equal(*neighborHeader, localBlock.Header)
 	resMsg := createMsgResHeader(result)
 	conn.Write(resMsg.Serialize())
+}
+
+// handleReqAddr handles the request of fetch node's address.
+func handleReqAddr(conn net.Conn, msg *Message) {
+	resMsg := createMsgResAddr()
+	conn.Write(resMsg.Serialize())
+	Info.Printf("Wallet address : %s", getNetworkCfg().WJson.Address)
 }
 
 // handlePrintChain handles the request of printing the chain's values in string format.

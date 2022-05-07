@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	cli "github.com/urfave/cli"
 )
 
@@ -21,22 +23,37 @@ func newCLIApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "ImChain"
 	app.Usage = "Implementation Blockchain in GoLang"
+	app.Flags = []cli.Flag{}
+	app.Commands = []cli.Command{}
 
+	createWalletCLI(app)
 	startServerCLI(app)
 	return app
+}
+
+func createWalletCLI(app *cli.App) {
+	app.Commands = append(app.Commands, cli.Command{
+		Name:    "create-wallet",
+		Aliases: []string{"cw"},
+		Usage:   "start server",
+		Action: func(ctx *cli.Context) error {
+			execCreateWallet()
+			return nil
+		},
+	})
 }
 
 // startServerCLI starts the blockchain server and connects to the network.
 func startServerCLI(app *cli.App) {
 	var cfgPath, nodeDb string
 
-	app.Commands = []cli.Command{
+	app.Commands = append(app.Commands, []cli.Command{
 		{
 			Name:    "start",
 			Aliases: []string{"ims"},
 			Usage:   "start blockchain server",
 			Action: func(ctx *cli.Context) error {
-				execCmd(ctx, cfgPath, nodeDb)
+				execStartServer(ctx, cfgPath, nodeDb)
 				if len(ctx.GlobalFlagNames()) > 0 {
 					if ctx.String("c") != "" {
 						cfgPath = ctx.String("c")
@@ -49,8 +66,8 @@ func startServerCLI(app *cli.App) {
 				return nil
 			},
 		},
-	}
-	app.Flags = []cli.Flag{
+	}...)
+	app.Flags = append(app.Flags, []cli.Flag{
 		cli.StringFlag{
 			Name:        "config, c",
 			Value:       DEFAULT_CFG_PATH,
@@ -63,11 +80,11 @@ func startServerCLI(app *cli.App) {
 			Usage:       "Load database storage from specified `NODE`",
 			Destination: &nodeDb,
 		},
-	}
+	}...)
 }
 
-// execCmd executes the specified commands from the terminal.
-func execCmd(ctx *cli.Context, cfgPath ...string) {
+// execStartServer executes the specified commands from the terminal.
+func execStartServer(ctx *cli.Context, cfgPath ...string) {
 	// `cfg[0]` = path to the configuration file.
 	// `cfg[1]` = path to the database storage file.
 	initNetworkCfg(cfgPath[0])
@@ -90,4 +107,15 @@ func execCmd(ctx *cli.Context, cfgPath ...string) {
 
 	startBCServer(bc)
 	defer bc.DB.Close()
+}
+
+// execCreateWallet creates new a `Wallet` instance.
+func execCreateWallet() {
+	config := initNetworkCfg(DEFAULT_CFG_PATH)
+	wallet := newWallet()
+	config.WJson = *wallet.ToJson()
+	config.ExportNetworkCfg(DEFAULT_CFG_PATH)
+
+	fmt.Printf("New wallet is created successfully! Wallet is exported to : * %s *\n", DEFAULT_CFG_PATH)
+	fmt.Printf("%s\n", config.WJson)
 }

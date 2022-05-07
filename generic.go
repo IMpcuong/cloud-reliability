@@ -113,3 +113,10 @@ func unique[T comparable](s []T) []T {
 	}
 	return res
 }
+
+// reverseBytes reverse the order of a byte slice.
+func reverseBytes(data []byte) {
+	for i, j := 0, len(data)-1; i < j; i, j = i+1, j-1 {
+		data[i], data[j] = data[j], data[i]
+	}
+}

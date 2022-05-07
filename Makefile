@@ -58,6 +58,7 @@ deps:
 	$(GOGET) github.com/google/go-cmp/cmp
 	$(GOGET) github.com/vrecan/death/v3
 	$(GOGET) golang.org/x/exp/constraints
+	$(GOGET) golang.org/x/crypto/ripemd160
 
 # Update all dependencies
 .PHONY: update
