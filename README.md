@@ -8,6 +8,11 @@
 > - Go Blockchain: [bctd-repository](https://github.com/btcsuite/btcd)
 > - Proof of Storage: [Proof-of-Storage](https://golden.com/wiki/Proof-of-storage_(PoS)-MN4DJY3)
 
+### Requirements:
+
+1. [Golang](https://go.dev/learn/): version 1.18 or above.
+2. Makefile: install using `Scoop` of any package managements available in your local machine.
+
 ### Usage:
 
 - Makefile commands: for more details please read the explanation in `Makefile`
