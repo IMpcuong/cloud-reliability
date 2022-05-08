@@ -35,7 +35,7 @@ func createWalletCLI(app *cli.App) {
 	app.Commands = append(app.Commands, cli.Command{
 		Name:    "create-wallet",
 		Aliases: []string{"cw"},
-		Usage:   "start server",
+		Usage:   "create new storable wallet address",
 		Action: func(ctx *cli.Context) error {
 			execCreateWallet()
 			return nil
