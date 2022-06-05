@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -36,11 +37,10 @@ func (cfg *Config) ExportNetworkCfg(filePath string) {
 		os.Exit(1)
 	}
 
-	e = ioutil.WriteFile(filePath, prettyMarshal, 0644)
-	if e != nil {
-		Error.Println(e.Error())
-		os.Exit(1)
-	}
+	// Export the Wallet's settings to the configuration file.
+	// Append the configuration file with Wallet's settings if it already existed.
+	cfgPath := readNwCfgPath(filePath)
+	appendFile(cfgPath, prettyMarshal)
 }
 
 // Get default network configurations.
@@ -48,50 +48,29 @@ func getNetworkCfg() *Config {
 	return nwConfig
 }
 
-// initNetworkCfg initializes the network configurations from the config file
+// initNwCfg initializes the network configurations from the config file
 // with the given source path.
-func initNetworkCfg(cfgPathCLI string) *Config {
+func initNwCfg(cfgPathCLI string) *Config {
 	var cfgPath string
 	if cfgPathCLI != "" {
 		cfgPath = cfgPathCLI
 	} else {
 		cfgPath = DEFAULT_CFG_PATH
 	}
-	nwConfig = importNetworkCfg(cfgPath)
+	nwConfig = importNwCfg(cfgPath)
 	return nwConfig
 }
 
-// importNetworkCfg reads the configuration from file in given `path` (flag value)
+// importNwCfg reads the configuration from file in given `path` (or flag value)
 // and returns the network configuration.
-func importNetworkCfg(path string) *Config {
+func importNwCfg(path string) *Config {
 	if (strings.Compare(path, DEFAULT_CFG_PATH)) == 0 {
 		return getCfgData(path)
 	}
+	cfgPath := readNwCfgPath(path)
+	cfgData := getCfgData(cfgPath)
 
-	var cfgPath string
-	// Walk through the default config directory and returns all the sub-directories.
-	dirs, err := walkCfgDir("")
-	if err != nil {
-		Error.Println(err.Error())
-	}
-
-	// Read all the sub-directories and returns relative paths
-	// from available config files for each nodes.
-	for iNode, dir := range dirs {
-		paths, err := readPaths(dir)
-		if err != nil {
-			Error.Println(err.Error())
-		}
-
-		for _, filePath := range paths {
-			// Checking if the flag value equal to the string formatter (node1/2/3) or not.
-			flag := fmt.Sprintf("%s%d", "node", iNode+1)
-			if path == flag && strings.Contains(filePath, "config.json") {
-				cfgPath = filePath
-			}
-		}
-	}
-	return getCfgData(cfgPath)
+	return cfgData
 }
 
 // walkCfgDir walks through the directory tree structure and returns all the sub-directories.
@@ -156,4 +135,63 @@ func getCfgData(path string) *Config {
 		os.Exit(1)
 	}
 	return &cfg
+}
+
+func checkFileExists(path string) bool {
+	// An alternative implementation:
+	// _, err := os.Open(path) // For read access
+	// return err == nil
+
+	_, err := os.Stat(path)
+	return !errors.Is(err, os.ErrNotExist)
+}
+
+func appendFile(path string, contents []byte) {
+	if isExist := checkFileExists(path); isExist {
+		err := ioutil.WriteFile(path, contents, 0644)
+		if err != nil {
+			Error.Println(err.Error())
+			os.Exit(1)
+		}
+	} else {
+		file, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		if err != nil {
+			Error.Panic(err)
+		}
+		defer file.Close()
+
+		if _, err := file.Write(contents); err != nil {
+			Error.Panic(err)
+		}
+	}
+}
+
+// readNwCfgPath returns the absolute path of the configuration file
+// for each node that matches the corresponding flag value (eg: node1/2/3).
+func readNwCfgPath(path string) string {
+	var cfgPath string
+	// Walk through the default config directory and returns all the sub-directories.
+	dirs, err := walkCfgDir("")
+	if err != nil {
+		Error.Println(err.Error())
+	}
+
+	// Read all the sub-directories and returns relative paths
+	// from available config files for each nodes.
+	for iNode, dir := range dirs {
+		paths, err := readPaths(dir)
+		if err != nil {
+			Error.Println(err.Error())
+		}
+
+		for _, filePath := range paths {
+			// Checking if the flag value equal to the string formatter (node1/2/3) or not.
+			flag := fmt.Sprintf("%s%d", "node", iNode+1)
+			if path == flag && strings.Contains(filePath, "config.json") {
+				cfgPath = filePath
+			}
+		}
+	}
+
+	return cfgPath
 }

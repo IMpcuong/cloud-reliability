@@ -32,15 +32,27 @@ func newCLIApp() *cli.App {
 }
 
 func createWalletCLI(app *cli.App) {
-	app.Commands = append(app.Commands, cli.Command{
-		Name:    "create-wallet",
-		Aliases: []string{"cw"},
-		Usage:   "create new storable wallet address",
-		Action: func(ctx *cli.Context) error {
-			execCreateWallet()
-			return nil
+	var cfgPath string
+
+	app.Commands = append(app.Commands, []cli.Command{
+		{
+			Name:    "create-wallet",
+			Aliases: []string{"cw"},
+			Usage:   "create new storable wallet address",
+			Action: func(ctx *cli.Context) error {
+				execCreateWallet(ctx, cfgPath)
+				return nil
+			},
 		},
-	})
+	}...)
+	app.Flags = append(app.Flags, []cli.Flag{
+		cli.StringFlag{
+			Name:        "wallet-addr, wa",
+			Value:       DEFAULT_CFG_PATH,
+			Usage:       "Export Wallet's configuration to specific `FILE`",
+			Destination: &cfgPath,
+		},
+	}...)
 }
 
 // startServerCLI starts the blockchain server and connects to the network.
@@ -87,7 +99,7 @@ func startServerCLI(app *cli.App) {
 func execStartServer(ctx *cli.Context, cfgPath ...string) {
 	// `cfg[0]` = path to the configuration file.
 	// `cfg[1]` = path to the database storage file.
-	initNetworkCfg(cfgPath[0])
+	initNwCfg(cfgPath[0])
 
 	// If `DB_FILE` haven't existed, initialize an empty blockchain.
 	// Else, read this file to get the blockchain structure.
@@ -110,12 +122,12 @@ func execStartServer(ctx *cli.Context, cfgPath ...string) {
 }
 
 // execCreateWallet creates new a `Wallet` instance.
-func execCreateWallet() {
-	config := initNetworkCfg(DEFAULT_CFG_PATH)
+func execCreateWallet(ctx *cli.Context, cfgPath string) {
+	config := initNwCfg(cfgPath)
 	wallet := newWallet()
 	config.WJson = *wallet.ToJson()
-	config.ExportNetworkCfg(DEFAULT_CFG_PATH)
+	config.ExportNetworkCfg(cfgPath)
 
-	fmt.Printf("New wallet is created successfully! Wallet is exported to : * %s *\n", DEFAULT_CFG_PATH)
+	fmt.Printf("New wallet is created successfully! Wallet is exported to : * %s *\n", cfgPath)
 	fmt.Printf("%s\n", config.WJson)
 }
