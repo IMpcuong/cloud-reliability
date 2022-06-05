@@ -42,7 +42,7 @@ func newWallet() *Wallet {
 	wallet := Wallet{
 		PrivateKey: privKey,
 		PublicKey:  pubKey,
-		Address:    genAddress(pubKey),
+		Address:    genAddr(pubKey),
 	}
 	return &wallet
 }
@@ -69,9 +69,9 @@ Schema:
 	--------------------------------------------------------------
 	base58Encode(nwVersion + Pk_hash + checksum) -> Wallet_Address
 */
-func genAddress(pubKey []byte) string {
+func genAddr(pubKey []byte) string {
 	version := []byte{NW_VERSION}
-	pubKeyHash := hashPublicKey(pubKey)
+	pubKeyHash := hashPubKey(pubKey)
 	versionPayload := append(version, pubKeyHash...)
 	checksum := checksum(versionPayload)
 
@@ -84,8 +84,8 @@ func genAddress(pubKey []byte) string {
 	return address
 }
 
-// hashPublicKey returns the hash value of the public key by using `ripemd160` hasher.
-func hashPublicKey(pubKey []byte) []byte {
+// hashPubKey returns the hash value of the public key by using `ripemd160` hasher.
+func hashPubKey(pubKey []byte) []byte {
 	pubKeySHA := sha256.Sum256(pubKey)
 
 	// RIPEMD-160 is a hash function computes a 160-bits messages digest.
@@ -108,8 +108,8 @@ func checksum(hash []byte) []byte {
 	return secondSHA[:ADDR_CHECKSUM_LEN]
 }
 
-// validateAddress checks if the wallet address is valid.
-func validateAddress(address string) bool {
+// validateAddr checks if the wallet address is valid.
+func validateAddr(address string) bool {
 	payload := base58Decode([]byte(address))
 	actualChecksum := payload[len(payload)-ADDR_CHECKSUM_LEN:]
 

@@ -40,8 +40,7 @@ func initBlockChain(node string) *Blockchain {
 		return nil
 	}
 
-	// Open the database storage file with `read-write` permission.
-	db, err := bolt.Open(absPath, 0600, nil)
+	db, err := openDB(absPath)
 	if err != nil {
 		Error.Fatal(err)
 	}
@@ -297,9 +296,7 @@ func getLocalBC(node string) *Blockchain {
 		return nil
 	}
 
-	// Open or create a new database storage file with `read-write` permission.
-	// NOTE: Bolt cannot access multiple processes the same database at the same time.
-	db, err := bolt.Open(absPath, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	db, err := openDB(absPath)
 	if err != nil {
 		Error.Fatal(err)
 	}
@@ -322,4 +319,15 @@ func closeDB(bc *Blockchain) {
 func getAbsPathDB(node string) string {
 	absPath := filepath.Join("config/", node, "/", DB_FILE)
 	return absPath
+}
+
+// openDB open or create a new database storage file with `read-write` permission.
+// NOTE: Bolt cannot access multiple processes the same database at the same time.
+func openDB(path string) (*bolt.DB, error) {
+	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	if err != nil {
+		Error.Fatal(err)
+	}
+
+	return db, nil
 }
