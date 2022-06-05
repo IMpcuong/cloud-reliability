@@ -237,7 +237,7 @@ func (bc *Blockchain) Stringify() string {
 	return chainAsStr
 }
 
-// Seriallize encode the chain's values into JSON formatter using `json.Marshal()`.
+// Serialize encode the chain's values into JSON formatter using `json.Marshal()`.
 func (bc Blockchain) Serialize() []byte {
 	encoded, err := json.Marshal(bc)
 	if err != nil {
@@ -298,7 +298,7 @@ func getLocalBC(node string) *Blockchain {
 	}
 
 	// Open or create a new database storage file with `read-write` permission.
-	// NOTE: Bolt cannot access multiple proccesses the same database at the same time.
+	// NOTE: Bolt cannot access multiple processes the same database at the same time.
 	db, err := bolt.Open(absPath, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		Error.Fatal(err)
@@ -318,7 +318,7 @@ func closeDB(bc *Blockchain) {
 }
 
 // getAbsPathDB returns the absolute path to the database storage file in the given node.
-//@@@ FIXME: this is a temporary solution, maybe automatically later.
+// @@@ FIXME: this is a temporary solution, maybe automatically later.
 func getAbsPathDB(node string) string {
 	absPath := filepath.Join("config/", node, "/", DB_FILE)
 	return absPath
