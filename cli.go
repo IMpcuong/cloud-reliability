@@ -16,6 +16,14 @@ import (
 		.\pdpapp.exe --config node1 --node node1 start
 	Aliases:
  		.\pdpapp.exe -c node2 -n node2 ims
+
+	Sample of command that will create wallet and store its contents to 'config.json' file:
+	Normal:
+		.\pdpapp.exe --wa node1 create-wallet
+	Verbose:
+		.\pdpapp.exe --wallet-addr node1 create-wallet
+	Alias:
+		.\pdpapp.exe --wa node1 cw
 */
 
 // newCLIApp create the new CLI application with some custom commands.
