@@ -168,6 +168,7 @@ func appendFile(path string, contents []byte) {
 
 // readNwCfgPath returns the absolute path of the configuration file
 // for each node that matches the corresponding flag value (eg: node1/2/3).
+// NOTE: 'path' argument can be understood as the flag's value (node1/2/3)
 func readNwCfgPath(path string) string {
 	var cfgPath string
 	// Walk through the default config directory and returns all the sub-directories.
