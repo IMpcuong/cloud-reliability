@@ -1,5 +1,11 @@
 package main
 
+import (
+	"bytes"
+	"encoding/gob"
+	"fmt"
+)
+
 // Continue the story from the `transaction.go`:
 // Basic structure for a TransactionOutput.
 type TxOutput struct {
@@ -10,4 +16,60 @@ type TxOutput struct {
 	PubKeyHash []byte
 }
 
+// Utility functions start from here.
 
+func NewTxOutput(val int, addr string) *TxOutput {
+	nTxOutput := &TxOutput{
+		Value:      val,
+		PubKeyHash: nil,
+	}
+	nTxOutput.LockTx(addr)
+
+	return nTxOutput
+}
+
+func (txOut *TxOutput) LockTx(address string) {
+	decodeAddr := base58Decode([]byte(address))
+	buyerHash := decodeAddr[1 : len(address)-4]
+
+	// Locking a transaction with the buyer is PubKeyHash.
+	txOut.PubKeyHash = buyerHash
+}
+
+// IsLocked returns true if the transaction is locked with the buyer's public key hash.
+func (txOut *TxOutput) IsLocked(buyerHash []byte) bool {
+	return bytes.Equal(txOut.PubKeyHash, buyerHash)
+}
+
+func (txOut *TxOutput) Stringify() string {
+	str := fmt.Sprintf("Value : %d\n", txOut.Value)
+	str += fmt.Sprintf("PubKeyHash : %x ", txOut.PubKeyHash)
+	return str
+}
+
+// Map of list of all available TxOutput.
+type TxOutputMap map[int]TxOutput
+
+func (txOutMap *TxOutputMap) SerializeTxOutMap() []byte {
+	var buf bytes.Buffer
+
+	encode := gob.NewEncoder(&buf)
+	err := encode.Encode(txOutMap)
+	if err != nil {
+		Error.Panic(err)
+	}
+
+	return buf.Bytes()
+}
+
+func DeserializeTxOutMap(data []byte) TxOutputMap {
+	var txOutMap TxOutputMap
+
+	decode := gob.NewDecoder(bytes.NewReader(data))
+	err := decode.Decode(&txOutMap)
+	if err != nil {
+		Error.Panic(err)
+	}
+
+	return txOutMap
+}

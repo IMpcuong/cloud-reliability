@@ -6,7 +6,7 @@
 > - Series: [Jeiwan.net - Author: Jeiwan](https://jeiwan.net/posts/building-blockchain-in-go-part-1/)
 > - Bitcoin: [Learning Bitcoin Technical](https://learnmeabitcoin.com/technical/)
 > - Go Blockchain: [bctd-repository](https://github.com/btcsuite/btcd)
-> - Proof of Storage: [Proof-of-Storage](https://golden.com/wiki/Proof-of-storage_(PoS)-MN4DJY3)
+> - Proof of Storage: [Proof-of-Storage](<https://golden.com/wiki/Proof-of-storage_(PoS)-MN4DJY3>)
 
 ### Requirements:
 
@@ -18,31 +18,37 @@
 - Makefile commands: for more details please read the explanation in `Makefile`
 
 Run:
+
 ```
 make run
 ```
 
 Build:
+
 ```
 make build
 ```
 
 Clean:
+
 ```
 make clean
 ```
 
 Format:
+
 ```
 make fmt
 ```
 
 Dependencies install:
+
 ```
 make deps
 ```
 
 Update dependencies:
+
 ```
 make update
 ```
@@ -62,9 +68,10 @@ COMMANDS:
    help, h            Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --config FILE, -c FILE  Load configuration from specific FILE (default: "config/config.json")
-   --node NODE, -n NODE    Load database storage from specified NODE
-   --help, -h              show help
+   --wallet-addr FILE, --wa FILE  Export Wallet's configuration to specific FILE (default: "config/config.json")
+   --config FILE, -c FILE         Load configuration from specific FILE (default: "config/config.json")
+   --node NODE, -n NODE           Load database storage from specified NODE
+   --help, -h                     show help
 ```
 
 - Some examples of the list of usable commands:
@@ -78,7 +85,7 @@ Start the network server:
 Create new wallet address:
 
 ```pdpapp
-.\pdpapp.exe create-wallet
+.\pdpapp.exe --wallet-addr node1 create-wallet
 ```
 
 ### Windows:
