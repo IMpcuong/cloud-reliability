@@ -18,7 +18,7 @@ type TxOutput struct {
 
 // Utility functions start from here.
 
-func NewTxOutput(val int, addr string) *TxOutput {
+func newTxOut(val int, addr string) *TxOutput {
 	nTxOutput := &TxOutput{
 		Value:      val,
 		PubKeyHash: nil,
