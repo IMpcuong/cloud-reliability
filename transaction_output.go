@@ -18,7 +18,8 @@ type TxOutput struct {
 
 // Utility functions start from here.
 
-func NewTxOutput(val int, addr string) *TxOutput {
+// newTxOut creates a new TxOutput with the provided value and a nil public key hash.
+func newTxOut(val int, addr string) *TxOutput {
 	nTxOutput := &TxOutput{
 		Value:      val,
 		PubKeyHash: nil,
@@ -28,9 +29,11 @@ func NewTxOutput(val int, addr string) *TxOutput {
 	return nTxOutput
 }
 
-func (txOut *TxOutput) LockTx(address string) {
-	decodeAddr := base58Decode([]byte(address))
-	buyerHash := decodeAddr[1 : len(address)-4]
+// LockTx depicts the progression of a transaction that is already
+// occupied by a buyer and identify by using their unique identifier hash.
+func (txOut *TxOutput) LockTx(addr string) {
+	decodeAddr := base58Decode([]byte(addr))
+	buyerHash := decodeAddr[1 : len(addr)-4]
 
 	// Locking a transaction with the buyer is PubKeyHash.
 	txOut.PubKeyHash = buyerHash
