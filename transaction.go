@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/gob"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 )
@@ -35,6 +36,8 @@ const (
 
 // Utility functions start from here.
 
+// NewCoinBaseTx creates a new coin-base transaction. The coin-base transaction can be
+// understood as the first transaction that was added in the first block of the chain.
 func NewCoinBaseTx(addrTo string) *Transaction {
 	txIn := TxInput{[]byte{}, -1, nil, []byte{}}
 	txOut := newTxOut(SUBSIDY, addrTo)
@@ -52,6 +55,7 @@ func (tx Transaction) IsCoinbase() bool {
 		tx.TxIns[0].TxOutIdx == -1
 }
 
+// HashTx hashing the whole transaction into a 32 bytes array.
 func (tx *Transaction) HashTx() []byte {
 	var hash [32]byte
 
@@ -62,6 +66,8 @@ func (tx *Transaction) HashTx() []byte {
 	return hash[:]
 }
 
+// Clone is the method that allows creating a new imitation/emulation
+// transaction from the original one.
 func (tx *Transaction) Clone() Transaction {
 	var txIns []TxInput
 	var txOuts []TxOutput
@@ -86,6 +92,8 @@ func (tx *Transaction) Clone() Transaction {
 	return clonedTx
 }
 
+// Sign is a utility function that was invented for the main purpose
+// is to help the buyer sign his/her own private key into the exchange deal.
 func (tx *Transaction) Sign(privKey ecdsa.PrivateKey) {
 	if tx.IsCoinbase() {
 		return
@@ -94,6 +102,8 @@ func (tx *Transaction) Sign(privKey ecdsa.PrivateKey) {
 	clonedTx := tx.Clone()
 	signData := fmt.Sprintf("%x", clonedTx)
 	// NOTE: Not yet fully understood!
+	// IDEA: a full signature was generated from a `rand` number, a buyer's `privKey`,
+	// and the corresponding data.
 	r, s, err := ecdsa.Sign(rand.Reader, &privKey, []byte(signData))
 	if err != nil {
 		Error.Panic(err)
@@ -109,6 +119,8 @@ func (tx *Transaction) Sign(privKey ecdsa.PrivateKey) {
 	}
 }
 
+// VerifySignature is a helper function that used to verify the
+// reliability of a transaction's signature.
 func (tx *Transaction) VerifySignature() bool {
 	clonedTx := tx.Clone()
 	curve := elliptic.P256()
@@ -116,6 +128,7 @@ func (tx *Transaction) VerifySignature() bool {
 	for _, valIn := range clonedTx.TxIns {
 		pubKey := valIn.PubKey
 
+		// HACK: maybe we should use `big.Int{}` constructor instead?
 		// Expected values:
 		r := new(big.Int)
 		s := new(big.Int)
@@ -138,11 +151,31 @@ func (tx *Transaction) VerifySignature() bool {
 			X:     x,
 			Y:     y,
 		}
-		if ecdsa.Verify(&rawPubKey, []byte(verifyData), r, s) == false {
+		if !ecdsa.Verify(&rawPubKey, []byte(verifyData), r, s) {
 			return false
 		}
 	}
 	return true
+}
+
+// VerifyValues have similarities in use with the signatures verification method.
+// But instead of verifying the signature itself, it checks the balancing between
+// the total amount the stream inputs (TxIns) and outputs (TxOuts).
+func (tx *Transaction) VerifyValues(prevTxs map[string]Transaction) bool {
+	totalIns, totalOuts := 0, 0
+
+	for _, valIn := range tx.TxIns {
+		prevTx := prevTxs[hex.EncodeToString(valIn.TxID)]
+		totalIns = prevTx.TxOuts[valIn.TxOutIdx].Value
+	}
+
+	for _, valOut := range tx.TxOuts {
+		totalOuts += valOut.Value
+	}
+
+	// Returns true if the total amount of inputs value is equal to
+	// the total amount of outputs value.
+	return totalIns == totalOuts
 }
 
 func (tx Transaction) Serialize() []byte {
@@ -170,15 +203,15 @@ func DeserializeTx(data []byte) *Transaction {
 }
 
 func (tx Transaction) Stringify() string {
-	strTx := fmt.Sprintf("\n	ID: %x", tx.ID)
-	strTx += fmt.Sprintf("\n	ValIn :\n")
+	strTx := fmt.Sprintf("\n\tID: %x", tx.ID)
+	strTx += "\n\tValIn: \n"
 	for idx, txIn := range tx.TxIns {
-		strTx += fmt.Sprintf("	[%d]%v\n", idx, txIn)
+		strTx += fmt.Sprintf("\t[%d]%v\n", idx, txIn)
 	}
 
-	strTx += fmt.Sprintf("\n	ValOut :\n")
+	strTx += "\n\tValOut: \n"
 	for idx, txOut := range tx.TxOuts {
-		strTx += fmt.Sprintf("	[%d]%v\n", idx, txOut)
+		strTx += fmt.Sprintf("\t[%d]%v\n", idx, txOut)
 	}
 
 	return strTx
