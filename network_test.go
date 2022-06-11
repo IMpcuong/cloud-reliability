@@ -19,9 +19,21 @@ func TestPortAvailable(t *testing.T) {
 
 // Nil pointer dereference when execute command!
 func TestOpenPort(t *testing.T) {
-	cmd := exec.Command("python3", "-m", "http.server", "3331")
+	cmd := exec.Command("python", "-m", "http.server", "3331")
 	err := cmd.Run()
 	if err != nil {
-		Error.Fatal(err)
+		t.Fatal(err)
+	}
+}
+
+func TestOpenConn(t *testing.T) {
+	node := Node{"localhost:3331"}
+	conn, err := openConn(node)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(conn)
+	if conn != nil {
+		defer conn.Close()
 	}
 }

@@ -122,12 +122,15 @@ func cmpBlockWithNeighbor(block *Block, node Node) bool {
 	msg := createMsgReqHeader(block.Header)
 	data := msg.Serialize()
 
-	conn, err := openConn(node)
-	err = transferData(conn, data)
+	conn, _ := openConn(node)
+	readerData := bytes.NewReader(data)
+	// Copy the message bytes data to the provided/connected node.
+	_, err := io.Copy(conn, readerData)
 	if err != nil {
 		Error.Panic(err)
 		return false
 	}
+	defer conn.Close()
 
 	// Scan the buffer data and convert it to bytes message.
 	scannerData, scannable := scanData(conn)
@@ -149,11 +152,14 @@ func pullBlockNeighbor(bc *Blockchain, node Node, posBlock int) {
 	msg := createMsgReqBlock(posBlock)
 	data := msg.Serialize()
 
-	conn, err := openConn(node)
-	err = transferData(conn, data)
+	conn, _ := openConn(node)
+	readerData := bytes.NewReader(data)
+	// Copy the message bytes data to the provided/connected node.
+	_, err := io.Copy(conn, readerData)
 	if err != nil {
 		Error.Panic(err)
 	}
+	defer conn.Close()
 
 	// Scan the buffer data and convert it to bytes message.
 	scannerData, scannable := scanData(conn)
@@ -184,12 +190,15 @@ func getDepthNeighbor(node Node) (int, error) {
 	msg := createMsgReqDepth()
 	data := msg.Serialize()
 
-	conn, err := openConn(node)
-	err = transferData(conn, data) // @@@ FIXME
+	conn, _ := openConn(node)
+	readerData := bytes.NewReader(data)
+	// Copy the message bytes data to the provided/connected node.
+	_, err := io.Copy(conn, readerData)
 	if err != nil {
 		Error.Panic(err)
 		return 0, err
 	}
+	defer conn.Close()
 
 	scannerData, scannable := scanData(conn)
 	if !scannable {
@@ -205,14 +214,18 @@ func getDepthNeighbor(node Node) (int, error) {
 
 // sendMsg send new message to the the given node.
 func sendMsg(msg *Message, node Node) {
-	conn, err := openConn(node)
 	data := msg.Serialize()
+	conn, _ := openConn(node)
 
-	err = transferData(conn, data)
+	readerData := bytes.NewReader(data)
+	// Copy the message bytes data to the provided/connected node.
+	_, err := io.Copy(conn, readerData)
 	if err != nil {
 		Error.Panic(err)
 		return
 	}
+
+	defer conn.Close()
 }
 
 // checkPort returns true if the connection to the given port was established.
@@ -235,23 +248,10 @@ func openConn(node Node) (net.Conn, error) {
 	conn, err := net.Dial("tcp", node.Address)
 	if err != nil {
 		Error.Printf("%s is not available!\n", node.Address)
-		return nil, err
+		return conn, err
 	}
-	defer conn.Close()
 
 	return conn, nil
-}
-
-// transferData copy the message bytes data to the provided/connected node.
-func transferData(conn net.Conn, data []byte) error {
-	readerData := bytes.NewReader(data)
-	_, err := io.Copy(conn, readerData)
-	if err != nil {
-		Error.Panic(err)
-		return err
-	}
-
-	return nil
 }
 
 // scanData scan the buffer data and convert it to bytes message.
