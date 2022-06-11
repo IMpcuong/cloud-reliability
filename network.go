@@ -77,32 +77,44 @@ func reqConnectBC(node Node, bc *Blockchain) bool {
 	}
 
 	Info.Printf("Depth comparison between [local - neighbor]: [%v - %v]", localDepth, neighborDepth)
-	minDepth := minVal(localDepth, neighborDepth)
+
+	detectIdentical(node, bc, localDepth, neighborDepth)
+	Info.Println()
+
+	syncNode(node, bc, localDepth, neighborDepth)
+	return true
+}
+
+func detectIdentical(node Node, bc *Blockchain, local, neighbor int) {
+	minDepth := minVal(local, neighbor)
 
 	// Compare the identical minimum of blocks from both sides.
 	// NOTE: block position starts from index 1 not 0 like usual case.
 	for pos := 1; pos <= minDepth; pos++ {
-		if cmpBlockWithNeighbor(bc.GetBlockByDepth(pos), node) {
+		if isIdentical := cmpBlockWithNeighbor(bc.GetBlockByDepth(pos), node); isIdentical {
 			Info.Printf("Block [%d] similarity detects completed. Progress: %d%%", pos, pos*100/minDepth)
 		} else {
 			Error.Fatalf("Block [%d] detected distinction. Exit prompt!", pos)
 			os.Exit(1)
 		}
 	}
-	Info.Println()
+}
 
-	// Pull/Synchronize blocks from any side if the opposite side have more blocks than the other.
-	if localDepth <= neighborDepth {
-		Info.Printf("Pull [%d] blocks from neighbor node", neighborDepth-localDepth)
-		for pos := localDepth + 1; pos <= neighborDepth; pos++ {
+// syncNode pulls/synchronize blocks from any side if the opposite side
+// has more blocks than the other.
+func syncNode(node Node, bc *Blockchain, local, neighbor int) {
+	if local < neighbor {
+		Info.Printf("Pull [%d] blocks from neighbor node", neighbor-local)
+		for pos := local + 1; pos <= neighbor; pos++ {
 			pullBlockNeighbor(bc, node, pos)
-			Info.Printf("Pulled block [%d] completed. Progress: %d%%", pos, pos*100/neighborDepth)
+			Info.Printf("Pulled block [%d] completed. Progress: %d%%", pos, pos*100/neighbor)
 		}
 	} else {
 		// TODO: implement the pulling process in the case the neighbor node has fewer blocks than the local.
+		// NOTE: 1. Need to detect which neighbor node has more blocks than the local.
+		//       2. Then figure out the number of blocks needed to pull from the neighbor.
 		panic("Not implemented yet!")
 	}
-	return true
 }
 
 // cmpBlockWithNeighbor returns true if blocks in the same position have identical data.
@@ -110,35 +122,25 @@ func cmpBlockWithNeighbor(block *Block, node Node) bool {
 	msg := createMsgReqHeader(block.Header)
 	data := msg.Serialize()
 
-	// Checking if the node address/port is reachable or available.
-	conn, err := net.Dial("tcp", node.Address)
-	if err != nil {
-		Error.Printf("%s is not available!\n", node.Address)
-		return false
-	}
-	defer conn.Close()
-
-	// Copy the msg bytes data to the connected node.
-	_, err = io.Copy(conn, bytes.NewReader(data))
+	conn, err := openConn(node)
+	err = transferData(conn, data)
 	if err != nil {
 		Error.Panic(err)
+		return false
 	}
 
 	// Scan the buffer data and convert it to bytes message.
-	scanner := bufio.NewScanner(bufio.NewReader(conn))
-	scanner.Scan()
-	msgAsBytes := scanner.Bytes()
-
-	// Deserialize the bytes message to `*Message` response.
-	msgRes := deserializeMsg(msgAsBytes)
-
-	// Parse the message response validation header and checking if it's valid.
-	isValid, err := strconv.ParseBool(string(msgRes.Data))
-	if err != nil {
-		Error.Printf("Parse failed!")
+	scannerData, scannable := scanData(conn)
+	if !scannable {
 		return false
 	}
-	return isValid
+
+	// Deserialize the bytes message to `*Message` response.
+	msgRes := deserializeMsg(scannerData)
+	if isValid := strParsable(msgRes.Data); isValid {
+		return isValid
+	}
+	return false
 }
 
 // pullBlockNeighbor pulls some limited amount of blocks from the neighbor node
@@ -147,27 +149,20 @@ func pullBlockNeighbor(bc *Blockchain, node Node, posBlock int) {
 	msg := createMsgReqBlock(posBlock)
 	data := msg.Serialize()
 
-	// Checking if the node address/port is reachable or available.
-	conn, err := net.Dial("tcp", node.Address)
-	if err != nil {
-		Error.Printf("%s is not available!\n", node.Address)
-		return
-	}
-	defer conn.Close()
-
-	// Copy the msg bytes data to the connected node.
-	_, err = io.Copy(conn, bytes.NewReader(data))
+	conn, err := openConn(node)
+	err = transferData(conn, data)
 	if err != nil {
 		Error.Panic(err)
 	}
 
 	// Scan the buffer data and convert it to bytes message.
-	scanner := bufio.NewScanner(bufio.NewReader(conn))
-	scanner.Scan()
-	msgAsBytes := scanner.Bytes()
+	scannerData, scannable := scanData(conn)
+	if !scannable {
+		return
+	}
 
 	// Deserialize the bytes message to `*Message` response.
-	msgRes := deserializeMsg(msgAsBytes)
+	msgRes := deserializeMsg(scannerData)
 	block := deserializeBlock(msgRes.Data)
 
 	// Adding new block to the current node's blockchain.
@@ -187,32 +182,22 @@ func fwHashes(bc *Blockchain) {
 // that was connected with local node.
 func getDepthNeighbor(node Node) (int, error) {
 	msg := createMsgReqDepth()
+	data := msg.Serialize()
 
-	// Checking if the node address/port is reachable or available.
-	conn, err := net.Dial("tcp", node.Address)
-	if err != nil {
-		Error.Printf("%s is not available!\n", node.Address)
-		return 0, err
-	}
-	defer conn.Close()
-
-	// Copy the msg bytes data to the connected node.
-	_, err = io.Copy(conn, bytes.NewReader(msg.Serialize()))
+	conn, err := openConn(node)
+	err = transferData(conn, data) // @@@ FIXME
 	if err != nil {
 		Error.Panic(err)
 		return 0, err
 	}
 
-	// Scan the buffer data and convert it to bytes message.
-	scanner := bufio.NewScanner(bufio.NewReader(conn))
-	ok := scanner.Scan()
-	if !ok {
+	scannerData, scannable := scanData(conn)
+	if !scannable {
 		return 0, nil
 	}
-	msgAsBytes := scanner.Bytes()
 
 	// Deserialize the bytes message to `*Message` response.
-	msgRes := deserializeMsg(msgAsBytes)
+	msgRes := deserializeMsg(scannerData)
 	neighborDepth := Bytestoi(msgRes.Data)
 
 	return neighborDepth, nil
@@ -220,14 +205,10 @@ func getDepthNeighbor(node Node) (int, error) {
 
 // sendMsg send new message to the the given node.
 func sendMsg(msg *Message, node Node) {
-	conn, err := net.Dial("tcp", node.Address)
-	if err != nil {
-		Error.Printf("%s is not available!\n", node.Address)
-		return
-	}
-	defer conn.Close()
+	conn, err := openConn(node)
+	data := msg.Serialize()
 
-	_, err = io.Copy(conn, bytes.NewReader(msg.Serialize()))
+	err = transferData(conn, data)
 	if err != nil {
 		Error.Panic(err)
 		return
@@ -246,4 +227,52 @@ func checkPort(host, port string) bool {
 		fmt.Println("Opened!", net.JoinHostPort(host, port))
 	}
 	return true
+}
+
+// openConn checking if the node's address/port is reachable or available
+// at the moment request connection was established.
+func openConn(node Node) (net.Conn, error) {
+	conn, err := net.Dial("tcp", node.Address)
+	if err != nil {
+		Error.Printf("%s is not available!\n", node.Address)
+		return nil, err
+	}
+	defer conn.Close()
+
+	return conn, nil
+}
+
+// transferData copy the message bytes data to the provided/connected node.
+func transferData(conn net.Conn, data []byte) error {
+	readerData := bytes.NewReader(data)
+	_, err := io.Copy(conn, readerData)
+	if err != nil {
+		Error.Panic(err)
+		return err
+	}
+
+	return nil
+}
+
+// scanData scan the buffer data and convert it to bytes message.
+func scanData(conn net.Conn) ([]byte, bool) {
+	reader := bufio.NewReader(conn)     // Read data from given connection.
+	scanner := bufio.NewScanner(reader) // Scan the data has been read from the connection.
+
+	scannerData := scanner.Bytes() // Bytes message.
+	scannable := scanner.Scan()
+
+	return scannerData, scannable
+}
+
+// strParsable parse the bytes data to string format.
+// Then validate the message response header and check if it's valid.
+func strParsable(data []byte) bool {
+	isValid, err := strconv.ParseBool(string(data))
+	if err != nil {
+		Error.Printf("Parse failed!")
+		return false
+	}
+
+	return isValid
 }
