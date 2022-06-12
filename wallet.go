@@ -85,6 +85,7 @@ func genAddr(pubKey []byte) string {
 }
 
 // hashPubKey returns the hash value of the public key by using `ripemd160` hasher.
+// Note that the public key is a hash value that's representing the identity of a user's wallet.
 func hashPubKey(pubKey []byte) []byte {
 	pubKeySHA := sha256.Sum256(pubKey)
 

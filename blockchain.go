@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -261,12 +262,102 @@ func (bc *Blockchain) FindExistUTxO() map[string]TxOutputMap {
 }
 
 // @@@ FIXME
-func (bc *Blockchain) NewTx(wallet *Wallet, toAddr string, amount int) *Transaction {
-	var ins []TxInput
-	var outs []TxOutput
+func (bc *Blockchain) NewTx(wallet *Wallet, toAddr string, totalVal int) *Transaction {
+	var totalIns []TxInput
+	var totalOuts []TxOutput
 
-	// UTxOSet := UTxOSet{bc}
-	return &Transaction{[]byte{}, ins, outs}
+	uTxOs := UTxOSet{Blockchain: bc}
+	uTxOs.Rearrange()
+	pubKeyHash := hashPubKey(wallet.PublicKey)
+	spendableVal, remainTxOuts := uTxOs.FindSpendableTxOut(pubKeyHash, totalVal)
+
+	if spendableVal < totalVal {
+		Error.Panic("ERROR: Not have enough funds left to activate the transaction!")
+	}
+
+	// Regenerate the list of TxInput from the remaining funds
+	// of the previous transaction.
+	for id, txOuts := range remainTxOuts {
+		txID, err := hex.DecodeString(id)
+		if err != nil {
+			Error.Fatal(err)
+		}
+
+		for idxOut := range txOuts {
+			txIn := TxInput{
+				TxID:      txID,
+				TxOutIdx:  idxOut,
+				Signature: nil,
+				PubKey:    wallet.PublicKey,
+			}
+			totalIns = append(totalIns, txIn)
+		}
+	}
+
+	// Regenerate the list of TxOutput by recalculating the remaining funds
+	// after spending on the previous TxInput transaction.
+	fromAddr := wallet.Address
+	totalOuts = append(totalOuts, *newTxOut(totalVal, toAddr))
+	if spendableVal > totalVal {
+		totalOuts = append(totalOuts, *newTxOut(spendableVal-totalVal, fromAddr))
+	}
+
+	newTx := &Transaction{
+		ID:     nil,
+		TxIns:  totalIns,
+		TxOuts: totalOuts,
+	}
+	newTx.ID = newTx.HashTx()
+	newTx.Sign(wallet.PrivateKey)
+
+	return newTx
+}
+
+func (bc *Blockchain) VerifyTx(tx *Transaction) bool {
+	if tx.IsCoinbase() {
+		return true
+	}
+
+	uTxOs := UTxOSet{Blockchain: bc}
+	uTxOs.Rearrange()
+	prevTxs := bc.GetPrevTxs(tx)
+
+	return tx.VerifySignature() && uTxOs.VerifyTxIns(tx.TxIns) && tx.VerifyValues(prevTxs)
+}
+
+func (bc *Blockchain) GetPrevTxs(tx *Transaction) map[string]Transaction {
+	prevTxs := make(map[string]Transaction)
+
+	for _, txIn := range tx.TxIns {
+		prevTx, err := bc.FindTxByID(txIn.TxID)
+		if err != nil {
+			Error.Fatal(err)
+		}
+
+		key := hex.EncodeToString(prevTx.ID)
+		prevTxs[key] = prevTx
+	}
+
+	return prevTxs
+}
+
+func (bc *Blockchain) FindTxByID(id []byte) (Transaction, error) {
+	bcIter := bc.Iterator()
+
+	for {
+		block := bcIter.Next()
+		for _, tx := range block.Transactions {
+			if bytes.Equal(tx.ID, id) {
+				return tx, nil
+			}
+		}
+
+		if len(block.Header.PrevBlockHash) == 0 {
+			break
+		}
+	}
+
+	return Transaction{}, errors.New("ERROR: Not found transaction")
 }
 
 // Stringify returns a string representation of the chain's values.

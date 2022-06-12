@@ -160,7 +160,8 @@ func (tx *Transaction) VerifySignature() bool {
 
 // VerifyValues have similarities in use with the signatures verification method.
 // But instead of verifying the signature itself, it checks the balancing between
-// the total amount the stream inputs (TxIns) and outputs (TxOuts).
+// the total amount of the stream inputs (TxIns) and outputs (TxOuts), from the start
+// until the current transaction.
 func (tx *Transaction) VerifyValues(prevTxs map[string]Transaction) bool {
 	totalIns, totalOuts := 0, 0
 

@@ -79,9 +79,8 @@ func reqConnectBC(node Node, bc *Blockchain) bool {
 	Info.Printf("Depth comparison between [local - neighbor]: [%v - %v]", localDepth, neighborDepth)
 
 	detectIdentical(node, bc, localDepth, neighborDepth)
-	Info.Println()
-
 	syncBlocks(node, bc, localDepth, neighborDepth)
+
 	return true
 }
 
