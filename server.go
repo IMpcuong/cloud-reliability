@@ -68,7 +68,9 @@ func handleReq(conn net.Conn, bc *Blockchain) {
 	case CPrintChain:
 		handlePrintChain(bc)
 	case CAddBlock:
-		handleAddBlock(conn, bc, []Transaction{}) // @@@ FIXME
+		handleAddBlock(conn, bc, []Transaction{}) // NOTE: not use anymore!
+	case CAddTx:
+		handleAddTx(conn, bc, msg)
 	default:
 		Info.Printf("Command message is invalid!\n")
 	}
@@ -120,10 +122,35 @@ func handlePrintChain(bc *Blockchain) {
 	Info.Printf("%v", bc.Stringify())
 }
 
-// @@@ FIXME: now instead of adding block -> adding a blank transaction to the latest block.
+// NOTE: now instead of adding block -> adding a blank transaction to the latest block.
 // handleAddBlock handles the request of adding new block to the chain.
 func handleAddBlock(conn net.Conn, bc *Blockchain, txs []Transaction) {
 	block := newBlock(txs, bc.GetLatestHash(), bc.GetDepth()+1)
 	bc.AddBlock(block)
 	fwHashes(bc)
+}
+
+// handleAddTx handles the request to add a transaction into a block.
+func handleAddTx(conn net.Conn, bc *Blockchain, msg *Message) {
+	var isSuccess bool
+
+	tx := DeserializeTx(msg.Data)
+	Info.Printf("Receiving new transaction: %x", tx)
+
+	isSuccess = bc.VerifyTx(tx)
+	if isSuccess {
+		Info.Println("Transaction validation succeeded => Create new block!")
+		toAddr := getWallet().Address
+		Info.Printf("Indicating coinbase transaction to an address: %s", toAddr)
+
+		coinbaseTx := newCoinBaseTx(toAddr)
+		nBlock := newBlock([]Transaction{*tx, *coinbaseTx}, bc.GetLatestHash(), bc.GetDepth()+1)
+		bc.AddBlock(nBlock)
+		fwHashes(bc)
+	} else {
+		Info.Println("Invalid transaction!")
+	}
+
+	resMsg := createMsgResAddTx(isSuccess)
+	conn.Write(resMsg.Serialize())
 }

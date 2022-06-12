@@ -33,6 +33,7 @@ func newTxOut(val int, addr string) *TxOutput {
 // occupied by a buyer and identify by using their unique identifier hash.
 func (txOut *TxOutput) LockTx(addr string) {
 	decodeAddr := base58Decode([]byte(addr))
+	// @@@ FIXME: handles all cases addr := { localhost:3331, 3331 }
 	buyerHash := decodeAddr[1 : len(addr)-4]
 
 	// Locking a transaction with the buyer is PubKeyHash.

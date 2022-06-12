@@ -31,16 +31,16 @@ type Transaction struct {
 
 const (
 	// The subsidy value that had been given to new user the first time they were joining the network.
-	SUBSIDY = 25
+	SUBSIDY = 1000
 )
 
 // Utility functions start from here.
 
-// NewCoinBaseTx creates a new coin-base transaction. The coin-base transaction can be
+// newCoinBaseTx creates a new coin-base transaction. The coin-base transaction can be
 // understood as the first transaction that was added in the first block of the chain.
-func NewCoinBaseTx(addrTo string) *Transaction {
+func newCoinBaseTx(toAddr string) *Transaction {
 	txIn := TxInput{[]byte{}, -1, nil, []byte{}}
-	txOut := newTxOut(SUBSIDY, addrTo)
+	txOut := newTxOut(SUBSIDY, toAddr)
 	coinbaseTX := Transaction{nil, []TxInput{txIn}, []TxOutput{*txOut}}
 	coinbaseTX.ID = coinbaseTX.HashTx()
 

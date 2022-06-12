@@ -261,7 +261,8 @@ func (bc *Blockchain) FindExistUTxO() map[string]TxOutputMap {
 	return UTxO
 }
 
-// @@@ FIXME
+// NewTx creates a new transaction from the given wallet
+// to the provided destination (address), within the total amount of coins/data.
 func (bc *Blockchain) NewTx(wallet *Wallet, toAddr string, totalVal int) *Transaction {
 	var totalIns []TxInput
 	var totalOuts []TxOutput
@@ -271,7 +272,7 @@ func (bc *Blockchain) NewTx(wallet *Wallet, toAddr string, totalVal int) *Transa
 	pubKeyHash := hashPubKey(wallet.PublicKey)
 	spendableVal, remainTxOuts := uTxOs.FindSpendableTxOut(pubKeyHash, totalVal)
 
-	if spendableVal < totalVal {
+	if spendableVal > totalVal {
 		Error.Panic("ERROR: Not have enough funds left to activate the transaction!")
 	}
 

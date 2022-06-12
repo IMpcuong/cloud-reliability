@@ -58,6 +58,9 @@ func initNwCfg(cfgPathCLI string) *Config {
 		cfgPath = DEFAULT_CFG_PATH
 	}
 	nwConfig = importNwCfg(cfgPath)
+	walletConfig := nwConfig.WJson.ToWallet()
+	setWallet(walletConfig)
+
 	return nwConfig
 }
 

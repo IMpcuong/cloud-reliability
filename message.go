@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"os"
 	"strconv"
 )
@@ -14,9 +15,11 @@ const (
 	CReqAddr    = "REQ_ADDR"     // Request to get node's address.
 	CPrintChain = "PRINT_CHAIN"  // Request to print the blockchain from the given node.
 	CAddBlock   = "ADD_BLOCK"    // Request to add a new block to the given chain.
+	CAddTx      = "ADD_TX"       // Request to add a new transaction to the provided block.
 
 	CResDepth  = "RES_DEPTH"  // Response to the requested fetch depth.
 	CResBlock  = "RES_BLOCK"  // Response to the requested fetch block contents.
+	CResTx     = "RES_Tx"     // Response to the requested adding new transaction to the provided block.
 	CResAddr   = "RES_ADDR"   // Response to the requested fetch node's address.
 	CResHeader = "RES_HEADER" // Response to the requested fetch header validation code with block's data.
 )
@@ -87,9 +90,15 @@ func createMsgReqHeader(header Header) *Message {
 	return createMsg(CReqHeader, header.Serialize())
 }
 
+// NOTE: unused yet!
 // createMsgReqAddr returns a new request message to fetch a node's address.
-func createMsgReqAddr() *Message {
+func CreateMsgReqAddr() *Message {
 	return createMsg(CReqAddr, []byte{})
+}
+
+// createMsgReqAddTx creates a new message to request adding a transaction to a new block.
+func createMsgReqAddTx(tx *Transaction) *Message {
+	return createMsg(CAddTx, tx.Serialize())
 }
 
 // Response Messages:
@@ -104,6 +113,11 @@ func createMsgResBlock(block *Block) *Message {
 	return createMsg(CResBlock, block.Serialize())
 }
 
+// createMsgResAddTx returns a message to response the adding transaction request.
+func createMsgResAddTx(isSuccess bool) *Message {
+	return createMsg(CResTx, []byte(strconv.FormatBool(isSuccess)))
+}
+
 // createMsgResHeader returns a message containing the result of the checking validation header request.
 func createMsgResHeader(isValid bool) *Message {
 	return createMsg(CResHeader, []byte(strconv.FormatBool(isValid)))
@@ -115,6 +129,20 @@ func createMsgResAddr() *Message {
 }
 
 // Utility functions start from here.
+
+func (msg *Message) Export(path string) {
+	prettyMarshal, e := json.MarshalIndent(msg, "", "  ")
+	if e != nil {
+		Error.Println(e.Error())
+		os.Exit(1)
+	}
+
+	e = ioutil.WriteFile(path, prettyMarshal, 0644)
+	if e != nil {
+		Error.Println(e.Error())
+		os.Exit(1)
+	}
+}
 
 // Serialize encode the given message into JSON formatter using `json.Marshal()`.
 func (msg *Message) Serialize() []byte {

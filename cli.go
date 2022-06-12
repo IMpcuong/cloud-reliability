@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	cli "github.com/urfave/cli"
 )
@@ -17,13 +18,18 @@ import (
 	Aliases:
  		.\pdpapp.exe -c node2 -n node2 ims
 
-	Sample of command that will create wallet and store its contents to 'config.json' file:
+	Sample command that will create wallet and store its contents to 'config.json' file:
 	Normal:
 		.\pdpapp.exe --wa node1 create-wallet
 	Verbose:
 		.\pdpapp.exe --wallet-addr node1 create-wallet
 	Alias:
 		.\pdpapp.exe --wa node1 cw
+
+	Sample command of creating new transaction: (eg: send from node2 -> node1)
+	Step 1: .\pdpapp.exe -c node2 -n node2 ims
+	Step 2: .\pdpapp.exe crtx -c node2 -n node2 --to localhost:3331 -v 1 -f test.txt
+	Step 3: Checking the `test.txt` file for more details.
 */
 
 // newCLIApp create the new CLI application with some custom commands.
@@ -31,11 +37,15 @@ func newCLIApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "ImChain"
 	app.Usage = "Implementation Blockchain in GoLang"
+
+	// NOTE: global commands and flags.
 	app.Flags = []cli.Flag{}
 	app.Commands = []cli.Command{}
 
-	createWalletCLI(app)
 	startServerCLI(app)
+	createWalletCLI(app)
+	createTransactionCLI(app)
+
 	return app
 }
 
@@ -103,6 +113,49 @@ func startServerCLI(app *cli.App) {
 	}...)
 }
 
+func createTransactionCLI(app *cli.App) {
+	var cfgPath, nodeDb, toAddr, exportFile string
+	var totalVal int
+
+	app.Commands = append(app.Commands, []cli.Command{
+		{
+			Name:    "create-tx",
+			Aliases: []string{"crtx"},
+			Usage:   "crtx -c {cfgPath} -n {node} -to {address} -v {value} -f {exportFile}",
+			Action: func(ctx *cli.Context) error {
+				execCreateTx(ctx, totalVal, cfgPath, nodeDb, toAddr, exportFile)
+				return nil
+			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name: "c",
+					// cfgPath[0]
+					Destination: &cfgPath,
+				},
+				cli.StringFlag{
+					Name: "n",
+					// cfgPath[1]
+					Destination: &nodeDb,
+				},
+				cli.IntFlag{
+					Name:        "v",
+					Destination: &totalVal,
+				},
+				cli.StringFlag{
+					Name: "to",
+					// cfgPath[2]
+					Destination: &toAddr,
+				},
+				cli.StringFlag{
+					Name: "f",
+					// cfgPath[3]
+					Destination: &exportFile,
+				},
+			},
+		},
+	}...)
+}
+
 // execStartServer executes the specified commands from the terminal.
 func execStartServer(ctx *cli.Context, cfgPath ...string) {
 	// `cfg[0]` = path to the configuration file.
@@ -139,4 +192,25 @@ func execCreateWallet(ctx *cli.Context, cfgPath string) {
 
 	fmt.Printf("New wallet is created successfully! Wallet is exported to : * %s *\n", cfgPath)
 	fmt.Printf("%s\n", config.WJson)
+}
+
+// @@@ FIXME: to be more cleaner!
+func execCreateTx(ctx *cli.Context, val int, cfgPath ...string) {
+	// `cfg[0]` = path to the configuration file.
+	// `cfg[1]` = path to the database storage file.
+	// `cfg[2]` = the node's port address.
+	// `cfg[3]` = the path to the output file.
+	Info.Printf("Execute transaction: send %d coins to address %s", val, cfgPath[2])
+	initNwCfg(cfgPath[0])
+	wallet := getWallet()
+	bc := getLocalBC(cfgPath[1])
+	if bc == nil {
+		Error.Print("Local blockchain not found. Need one existed first!")
+		os.Exit(1)
+	}
+
+	tx := bc.NewTx(wallet, cfgPath[2], val)
+	msgReq := createMsgReqAddTx(tx)
+	msgReq.Export(cfgPath[3])
+	defer bc.DB.Close()
 }

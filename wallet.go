@@ -36,6 +36,16 @@ type WalletJson struct {
 
 // Utility functions start from here.
 
+var wallet *Wallet
+
+func setWallet(w *Wallet) {
+	wallet = w
+}
+
+func getWallet() *Wallet {
+	return wallet
+}
+
 // newWallet returns a new Wallet instance.
 func newWallet() *Wallet {
 	privKey, pubKey := newKeyPair()
