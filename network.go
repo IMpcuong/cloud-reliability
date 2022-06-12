@@ -77,32 +77,44 @@ func reqConnectBC(node Node, bc *Blockchain) bool {
 	}
 
 	Info.Printf("Depth comparison between [local - neighbor]: [%v - %v]", localDepth, neighborDepth)
-	minDepth := minVal(localDepth, neighborDepth)
+
+	detectIdentical(node, bc, localDepth, neighborDepth)
+	Info.Println()
+
+	syncBlocks(node, bc, localDepth, neighborDepth)
+	return true
+}
+
+func detectIdentical(node Node, bc *Blockchain, local, neighbor int) {
+	minDepth := minVal(local, neighbor)
 
 	// Compare the identical minimum of blocks from both sides.
 	// NOTE: block position starts from index 1 not 0 like usual case.
 	for pos := 1; pos <= minDepth; pos++ {
-		if cmpBlockWithNeighbor(bc.GetBlockByDepth(pos), node) {
+		if isIdentical := cmpBlockWithNeighbor(bc.GetBlockByDepth(pos), node); isIdentical {
 			Info.Printf("Block [%d] similarity detects completed. Progress: %d%%", pos, pos*100/minDepth)
 		} else {
 			Error.Fatalf("Block [%d] detected distinction. Exit prompt!", pos)
 			os.Exit(1)
 		}
 	}
-	Info.Println()
+}
 
-	// Pull/Synchronize blocks from any side if the opposite side have more blocks than the other.
-	if localDepth <= neighborDepth {
-		Info.Printf("Pull [%d] blocks from neighbor node", neighborDepth-localDepth)
-		for pos := localDepth + 1; pos <= neighborDepth; pos++ {
+// syncBlocks pulls/synchronize blocks from any side if the opposite side
+// has more blocks than the other.
+func syncBlocks(node Node, bc *Blockchain, local, neighbor int) {
+	if local <= neighbor {
+		Info.Printf("Pull [%d] blocks from neighbor node", neighbor-local)
+		for pos := local + 1; pos <= neighbor; pos++ {
 			pullBlockNeighbor(bc, node, pos)
-			Info.Printf("Pulled block [%d] completed. Progress: %d%%", pos, pos*100/neighborDepth)
+			Info.Printf("Pulled block [%d] completed. Progress: %d%%", pos, pos*100/neighbor)
 		}
 	} else {
 		// TODO: implement the pulling process in the case the neighbor node has fewer blocks than the local.
+		// NOTE: 1. Need to detect which neighbor node has more blocks than the local.
+		//       2. Then figure out the number of blocks needed to pull from the neighbor.
 		panic("Not implemented yet!")
 	}
-	return true
 }
 
 // cmpBlockWithNeighbor returns true if blocks in the same position have identical data.

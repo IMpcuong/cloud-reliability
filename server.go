@@ -68,7 +68,7 @@ func handleReq(conn net.Conn, bc *Blockchain) {
 	case CPrintChain:
 		handlePrintChain(bc)
 	case CAddBlock:
-		handleAddBlock(conn, bc, msg)
+		handleAddBlock(conn, bc, []Transaction{}) // @@@ FIXME
 	default:
 		Info.Printf("Command message is invalid!\n")
 	}
@@ -120,9 +120,10 @@ func handlePrintChain(bc *Blockchain) {
 	Info.Printf("%v", bc.Stringify())
 }
 
+// @@@ FIXME: now instead of adding block -> adding a blank transaction to the latest block.
 // handleAddBlock handles the request of adding new block to the chain.
-func handleAddBlock(conn net.Conn, bc *Blockchain, msg *Message) {
-	block := newBlock(string(msg.Data), bc.GetLatestHash(), bc.GetDepth()+1)
+func handleAddBlock(conn net.Conn, bc *Blockchain, txs []Transaction) {
+	block := newBlock(txs, bc.GetLatestHash(), bc.GetDepth()+1)
 	bc.AddBlock(block)
 	fwHashes(bc)
 }

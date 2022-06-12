@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -213,6 +214,59 @@ func (bc *Blockchain) GetHashes() [][]byte {
 	}
 
 	return hashes
+}
+
+func (bc *Blockchain) FindExistUTxO() map[string]TxOutputMap {
+	UTxO := make(map[string]TxOutputMap)
+	spentTxOs := make(map[string][]int)
+	bcIter := bc.Iterator()
+
+	for {
+		block := bcIter.Next()
+		for _, tx := range block.Transactions {
+			txID := hex.EncodeToString(tx.ID)
+
+		TxOuts:
+			for idx, txOut := range tx.TxOuts {
+				if spentTxOs[txID] != nil {
+					for _, spentOutIdx := range spentTxOs[txID] {
+						if spentOutIdx == idx {
+							continue TxOuts
+						}
+					}
+				}
+
+				listTxOut := UTxO[txID]
+				if listTxOut == nil {
+					listTxOut = make(TxOutputMap)
+				}
+				listTxOut[idx] = txOut
+				UTxO[txID] = listTxOut
+			}
+
+			if !tx.IsCoinbase() {
+				for _, txIn := range tx.TxIns {
+					txInID := hex.EncodeToString(txIn.TxID)
+					spentTxOs[txInID] = append(spentTxOs[txInID], txIn.TxOutIdx)
+				}
+			}
+		}
+
+		if len(block.Header.PrevBlockHash) == 0 {
+			break
+		}
+	}
+
+	return UTxO
+}
+
+// @@@ FIXME
+func (bc *Blockchain) NewTx(wallet *Wallet, toAddr string, amount int) *Transaction {
+	var ins []TxInput
+	var outs []TxOutput
+
+	// UTxOSet := UTxOSet{bc}
+	return &Transaction{[]byte{}, ins, outs}
 }
 
 // Stringify returns a string representation of the chain's values.

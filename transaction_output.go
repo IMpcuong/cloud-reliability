@@ -39,8 +39,8 @@ func (txOut *TxOutput) LockTx(addr string) {
 	txOut.PubKeyHash = buyerHash
 }
 
-// IsLocked returns true if the transaction is locked with the buyer's public key hash.
-func (txOut *TxOutput) IsLocked(buyerHash []byte) bool {
+// IsLockedWith returns true if the transaction is locked with the buyer's public key hash.
+func (txOut *TxOutput) IsLockedWith(buyerHash []byte) bool {
 	return bytes.Equal(txOut.PubKeyHash, buyerHash)
 }
 
@@ -53,7 +53,7 @@ func (txOut *TxOutput) Stringify() string {
 // Map of list of all available TxOutput.
 type TxOutputMap map[int]TxOutput
 
-func (txOutMap *TxOutputMap) SerializeTxOutMap() []byte {
+func (txOutMap *TxOutputMap) Serialize() []byte {
 	var buf bytes.Buffer
 
 	encode := gob.NewEncoder(&buf)
@@ -65,7 +65,7 @@ func (txOutMap *TxOutputMap) SerializeTxOutMap() []byte {
 	return buf.Bytes()
 }
 
-func DeserializeTxOutMap(data []byte) TxOutputMap {
+func deserializeTxOutMap(data []byte) TxOutputMap {
 	var txOutMap TxOutputMap
 
 	decode := gob.NewDecoder(bytes.NewReader(data))

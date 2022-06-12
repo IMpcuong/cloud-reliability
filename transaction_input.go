@@ -6,7 +6,7 @@ import "fmt"
 // Basic structure for a TransactionInput.
 type TxInput struct {
 	TxID      []byte `json:"TxID"`      // TransactionID of the previous qualified transaction.
-	TxOutIdx  int    `json:"TxOutIdx"`  // Counting how many times the buyer has already transferred money.
+	TxOutIdx  int    `json:"TxOutIdx"`  // Indexing how many times the buyer has already transferred money.
 	Signature []byte `json:"Signature"` // Digital Signature of buyer.
 	PubKey    []byte `json:"PubKey"`    // Still the same as the buyer's `PubKeyHash` in `TxOutput`.
 }

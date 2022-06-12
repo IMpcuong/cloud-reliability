@@ -3,16 +3,16 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 )
 
 type Block struct {
-	Header Header `json:"BlockHeader"` // Header contains identity of one block.
-	Data   []byte `json:"Data"`        // Data contained by one block.
+	Header       Header        `json:"BlockHeader"`  // Header contains identity of one block.
+	Transactions []Transaction `json:"Transactions"` // Transactions contained by one block.
 }
 
 // Simple structure of a block.
@@ -25,12 +25,12 @@ type Header struct {
 }
 
 // Create Genesis Block (starting point).
-func newGenesisBlock() *Block {
-	return newBlock("Genesis Block", []byte{}, 1)
+func newGenesisBlock(txs []Transaction) *Block {
+	return newBlock(txs, []byte{}, 1)
 }
 
 // Create/Mine new block for the chain.
-func newBlock(data string, prevBlockHash []byte, curDepth int) *Block {
+func newBlock(txs []Transaction, prevBlockHash []byte, curDepth int) *Block {
 	nHeader := Header{
 		PrevBlockHash: prevBlockHash,
 		Hash:          []byte{},
@@ -38,7 +38,7 @@ func newBlock(data string, prevBlockHash []byte, curDepth int) *Block {
 		Depth:         curDepth,
 		Nonce:         0,
 	}
-	nblock := &Block{nHeader, []byte(data)}
+	nblock := &Block{nHeader, txs}
 	nblock.GenHash()
 	return nblock
 }
@@ -55,7 +55,10 @@ func (block *Block) IsGenesis() bool {
 func (block *Block) Stringify() string {
 	var blockAsStr string
 	blockAsStr += fmt.Sprintf("Previous hash value: %x\n", block.Header.PrevBlockHash)
-	blockAsStr += fmt.Sprintf("Block's Data: %x\n", block.Data)
+	blockAsStr += "Block's Transactions: \n"
+	for idx, tx := range block.Transactions {
+		blockAsStr += fmt.Sprintf("\tTx[%d] : %d\n", idx, tx)
+	}
 	blockAsStr += fmt.Sprintf("Block's Hash: %x\n", block.Header.Hash)
 	blockAsStr += fmt.Sprintf("Block's Depth: %x\n", block.Header.Hash)
 	blockAsStr += fmt.Sprintf("Block's Nonce: %x\n", block.Header.Hash)
@@ -65,11 +68,20 @@ func (block *Block) Stringify() string {
 
 // Create a hash generator for the new block.
 func (block *Block) GenHash() {
-	bTimeStamp := []byte(strconv.FormatInt(block.Header.Timestamp, 10))
-	headerAsBytes := bytes.Join([][]byte{block.Header.PrevBlockHash, block.Data, bTimeStamp}, []byte{})
-	headerHashVal := sha256.Sum256(headerAsBytes)
+	hashVal := sha256.Sum256(block.Serialize())
+	block.Header.Hash = hashVal[:]
+}
 
-	block.Header.Hash = headerHashVal[:]
+func (block *Block) GenHashTx() []byte {
+	var encoded bytes.Buffer
+
+	encode := gob.NewEncoder(&encoded)
+	err := encode.Encode(block.Transactions)
+	if err != nil {
+		Error.Fatal(err)
+	}
+
+	return encoded.Bytes()
 }
 
 // Serialize encode the given block's value into JSON formatter using `json.Marshal()`.

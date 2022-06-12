@@ -42,12 +42,18 @@ func newProofOfWork(block *Block) *ProofOfWork {
 // This function will be consuming the incremented `nonce` as the argument,
 // combining `nonce` with the block's data that we expected to be accomplishing the constraint.
 func (pow *ProofOfWork) PrepareData(nonce int) []byte {
+	txAsBytes := []byte{}
+	for _, tx := range pow.Block.Transactions {
+		txAsBytes = append(txAsBytes, tx.Serialize()...)
+	}
+
 	// Concatenate all the needed data to a bytes slice.
 	data := bytes.Join(
 		[][]byte{
 			pow.Block.Header.PrevBlockHash,
-			pow.Block.Data,
+			txAsBytes,
 			Itobytes(int(pow.Block.Header.Timestamp)),
+			Itobytes(pow.Block.Header.Depth),
 			// Nonce is the incremented counter needs to be found.
 			Itobytes(nonce),
 		},

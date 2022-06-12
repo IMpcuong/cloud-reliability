@@ -122,7 +122,8 @@ func execStartServer(ctx *cli.Context, cfgPath ...string) {
 
 	if bc == nil || bc.IsEmpty() {
 		Info.Printf("Pull failed, no available node for synchronization. Create new blockchain instead.\n")
-		bc.AddBlock(newGenesisBlock())
+		firstTx := []Transaction{}
+		bc.AddBlock(newGenesisBlock(firstTx))
 	}
 
 	startBCServer(bc)

@@ -4,5 +4,6 @@
 # File names or file types.
 *.out
 *.exe
+*.xlsx
 blockchain.db
 blockchain.db.lock
