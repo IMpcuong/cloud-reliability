@@ -180,7 +180,7 @@ func execStartServer(ctx *cli.Context, cfgPath ...string) {
 	}
 
 	startBCServer(bc)
-	defer bc.DB.Close()
+	closeDB(bc)
 }
 
 // execCreateWallet creates new a `Wallet` instance.
@@ -212,5 +212,5 @@ func execCreateTx(ctx *cli.Context, val int, cfgPath ...string) {
 	tx := bc.NewTx(wallet, cfgPath[2], val)
 	msgReq := createMsgReqAddTx(tx)
 	msgReq.Export(cfgPath[3])
-	defer bc.DB.Close()
+	closeDB(bc)
 }
