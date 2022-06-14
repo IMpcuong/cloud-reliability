@@ -47,6 +47,7 @@ func newCLIApp() *cli.App {
 	startServerCLI(app)
 	createWalletCLI(app)
 	createTransactionCLI(app)
+	createValidationPrfCLI(app)
 
 	return app
 }
@@ -158,6 +159,28 @@ func createTransactionCLI(app *cli.App) {
 	}...)
 }
 
+func createValidationPrfCLI(app *cli.App) {
+	var cfgPath string
+
+	app.Commands = append(app.Commands, []cli.Command{
+		{
+			Name:    "validate",
+			Aliases: []string{"v"},
+			Usage:   "",
+			Action: func(ctx *cli.Context) error {
+				execValidateBlock(ctx, cfgPath)
+				return nil
+			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:        "n",
+					Destination: &cfgPath,
+				},
+			},
+		},
+	}...)
+}
+
 // execStartServer executes the specified commands from the terminal.
 func execStartServer(ctx *cli.Context, cfgPath ...string) {
 	// `cfg[0]` = path to the configuration file.
@@ -225,4 +248,19 @@ func execCreateTx(ctx *cli.Context, val int, cfgPath ...string) {
 		msgReq.Export(cfgPath[3])
 	}
 	defer bc.DB.Close()
+}
+
+// execCreateWallet creates new a `Wallet` instance.
+func execValidateBlock(ctx *cli.Context, cfgPath string) {
+	bc := getLocalBC(cfgPath)
+	if bc == nil {
+		Info.Printf("Local blockchain database not found. Initialize empty blockchain instead.")
+		bc = initBlockChain(cfgPath)
+	} else {
+		Info.Printf("Import blockchain database from local storage completed!")
+	}
+
+	for idx := 1; idx <= bc.GetDepth(); idx++ {
+		checkBlockPrf(bc, idx)
+	}
 }

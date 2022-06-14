@@ -185,6 +185,35 @@ func pullBlockNeighbor(bc *Blockchain, node Node, posBlock int) {
 	bc.AddBlock(block)
 }
 
+func checkBlockPrf(bc *Blockchain, posBlock int) {
+	msg := createMsgReqPrf(bc.GetBlockByDepth(posBlock).GenPrf())
+	data := msg.Serialize()
+
+	// Checking if the node address/port is reachable or available.
+	bcAddr := "localhost:3331"
+	conn, err := net.Dial("tcp", bcAddr)
+	if err != nil {
+		Error.Printf("%s is not available!\n", bcAddr)
+		return
+	}
+	defer conn.Close()
+
+	// Copy the msg bytes data to the connected node.
+	_, err = io.Copy(conn, bytes.NewReader(data))
+	if err != nil {
+		Error.Panic(err)
+	}
+
+	// Scan the buffer data and convert it to bytes message.
+	scanner := bufio.NewScanner(bufio.NewReader(conn))
+	scanner.Scan()
+	msgAsBytes := scanner.Bytes()
+
+	// Deserialize the bytes message to `*Message` response.
+	msgRes := deserializeMsg(msgAsBytes)
+	Info.Printf(string(msgRes.Data))
+}
+
 // fwHashes forwards the new message's hash data to all neighbor nodes.
 func fwHashes(bc *Blockchain) {
 	nw := getNetwork()

@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"time"
 )
@@ -70,6 +71,12 @@ func (block *Block) Stringify() string {
 func (block *Block) GenHash() {
 	hashVal := sha256.Sum256(block.Serialize())
 	block.Header.Hash = hashVal[:]
+}
+
+func (block *Block) GenPrf() []byte {
+	hashVal := block.Header.Hash
+	randPos := rand.Intn(len(hashVal) - 4)
+	return hashVal[randPos : randPos+4]
 }
 
 func (block *Block) GenHashTx() []byte {

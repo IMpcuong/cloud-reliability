@@ -217,6 +217,10 @@ func (bc *Blockchain) GetHashes() [][]byte {
 	return hashes
 }
 
+func (bc *Blockchain) ValidatePrf(prf []byte) bool {
+	return bytes.ContainsAny(bc.GetLatestHash(), string(prf))
+}
+
 func (bc *Blockchain) FindExistUTxO() map[string]TxOutputMap {
 	uTxOs := make(map[string]TxOutputMap)
 	spentTxOs := make(map[string][]int)

@@ -65,6 +65,8 @@ func handleReq(conn net.Conn, bc *Blockchain) {
 		handleReqHeader(conn, bc, msg)
 	case CReqAddr:
 		handleReqAddr(conn, msg)
+	case CReqPrf:
+		handleReqPrf(conn, bc, msg)
 	case CPrintChain:
 		handlePrintChain(bc)
 	case CAddBlock:
@@ -76,6 +78,15 @@ func handleReq(conn net.Conn, bc *Blockchain) {
 	}
 
 	conn.Close()
+}
+
+func handleReqPrf(conn net.Conn, bc *Blockchain, msg *Message) {
+	prf := msg.Data
+	if isValid := bc.ValidatePrf(prf); isValid {
+		resMsg := createMsgResPrf(isValid)
+		conn.Write(resMsg.Serialize())
+	}
+	Error.Print("Integrity verification given block failed!")
 }
 
 // handleReqFwHash handles request forwards hashes list to all neighbor node.

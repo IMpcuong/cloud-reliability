@@ -13,6 +13,7 @@ const (
 	CReqBlock   = "REQ_BLOCK"    // Request to fetch the given block contents.
 	CReqHeader  = "REQ_HEADER"   // Request to fetch the given block's header to validate against the hash list.
 	CReqAddr    = "REQ_ADDR"     // Request to get node's address.
+	CReqPrf     = "REQ_PRF"      // Request to get block's proof.
 	CPrintChain = "PRINT_CHAIN"  // Request to print the blockchain from the given node.
 	CAddBlock   = "ADD_BLOCK"    // Request to add a new block to the given chain.
 	CAddTx      = "ADD_TX"       // Request to add a new transaction to the provided block.
@@ -21,6 +22,7 @@ const (
 	CResBlock  = "RES_BLOCK"  // Response to the requested fetch block contents.
 	CResTx     = "RES_Tx"     // Response to the requested adding new transaction to the provided block.
 	CResAddr   = "RES_ADDR"   // Response to the requested fetch node's address.
+	CResPrf    = "RES_PRF"    // Response to the validate block's proof request.
 	CResHeader = "RES_HEADER" // Response to the requested fetch header validation code with block's data.
 )
 
@@ -96,6 +98,11 @@ func CreateMsgReqAddr() *Message {
 	return createMsg(CReqAddr, []byte{})
 }
 
+// @@@
+func createMsgReqPrf(prf []byte) *Message {
+	return createMsg(CReqPrf, prf)
+}
+
 // createMsgReqAddTx creates a new message to request adding a transaction to a new block.
 func createMsgReqAddTx(tx *Transaction) *Message {
 	return createMsg(CAddTx, tx.Serialize())
@@ -126,6 +133,11 @@ func createMsgResHeader(isValid bool) *Message {
 // createMsgResAddr returns a message to response the fetch node's address request.
 func createMsgResAddr() *Message {
 	return createMsg(CResAddr, []byte{})
+}
+
+// @@@
+func createMsgResPrf(isValid bool) *Message {
+	return createMsg(CResPrf, []byte(strconv.FormatBool(isValid)))
 }
 
 // Utility functions start from here.
