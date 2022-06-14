@@ -58,6 +58,8 @@ func newWallet() *Wallet {
 }
 
 // newKeyPair generates a new keypair for the wallet structure.
+// Or more concrete this (pubKey, privKey) is the keypair that will be used
+// to identify the wallet owner.
 func newKeyPair() (ecdsa.PrivateKey, []byte) {
 	curve := elliptic.P256()
 	privKey, err := ecdsa.GenerateKey(curve, rand.Reader)

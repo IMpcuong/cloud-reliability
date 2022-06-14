@@ -72,7 +72,7 @@ func (s *UTxOSet) FindByPubKey(pubKeyHash []byte) TxOutputMap {
 func (s UTxOSet) FindSpendableTxOut(pubKeyHash []byte, totalVal int) (int, map[string]TxOutputMap) {
 	db, bucketName := s.GetUTxOProps()
 	remainTxOuts := make(map[string]TxOutputMap)
-	spendableVal := 0
+	var spendableVal int
 
 	err := db.View(func(tx *bolt.Tx) error {
 		_, cursor := getBoltProps(tx, bucketName)

@@ -218,7 +218,7 @@ func (bc *Blockchain) GetHashes() [][]byte {
 }
 
 func (bc *Blockchain) FindExistUTxO() map[string]TxOutputMap {
-	UTxO := make(map[string]TxOutputMap)
+	uTxOs := make(map[string]TxOutputMap)
 	spentTxOs := make(map[string][]int)
 	bcIter := bc.Iterator()
 
@@ -237,12 +237,12 @@ func (bc *Blockchain) FindExistUTxO() map[string]TxOutputMap {
 					}
 				}
 
-				listTxOut := UTxO[txID]
+				listTxOut := uTxOs[txID]
 				if listTxOut == nil {
 					listTxOut = make(TxOutputMap)
 				}
 				listTxOut[idx] = txOut
-				UTxO[txID] = listTxOut
+				uTxOs[txID] = listTxOut
 			}
 
 			if !tx.IsCoinbase() {
@@ -258,7 +258,7 @@ func (bc *Blockchain) FindExistUTxO() map[string]TxOutputMap {
 		}
 	}
 
-	return UTxO
+	return uTxOs
 }
 
 // NewTx creates a new transaction from the given wallet

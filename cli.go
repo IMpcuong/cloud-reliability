@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 
 	cli "github.com/urfave/cli"
 )
@@ -180,7 +182,7 @@ func execStartServer(ctx *cli.Context, cfgPath ...string) {
 	}
 
 	startBCServer(bc)
-	closeDB(bc)
+	defer bc.DB.Close()
 }
 
 // execCreateWallet creates new a `Wallet` instance.
@@ -200,7 +202,12 @@ func execCreateTx(ctx *cli.Context, val int, cfgPath ...string) {
 	// `cfg[1]` = path to the database storage file.
 	// `cfg[2]` = the node's port address.
 	// `cfg[3]` = the path to the output file.
-	Info.Printf("Execute transaction: send %d coins to address %s", val, cfgPath[2])
+	var sourceAddr string
+	re := regexp.MustCompile("[0-9]+")
+	sourceIdxAddr := re.Find([]byte(cfgPath[0]))
+	sourceAddr = fmt.Sprintf("localhost:333%d", Bytestoi(sourceIdxAddr))
+	Info.Printf("Execute transaction: send %d coins from %s to address %s", val, sourceAddr, cfgPath[2])
+
 	initNwCfg(cfgPath[0])
 	wallet := getWallet()
 	bc := getLocalBC(cfgPath[1])
@@ -211,6 +218,11 @@ func execCreateTx(ctx *cli.Context, val int, cfgPath ...string) {
 
 	tx := bc.NewTx(wallet, cfgPath[2], val)
 	msgReq := createMsgReqAddTx(tx)
-	msgReq.Export(cfgPath[3])
-	closeDB(bc)
+	if isExist := checkFileExists(cfgPath[3]); isExist {
+		contents, _ := json.MarshalIndent(msgReq, "", "  ")
+		appendFile(cfgPath[3], contents)
+	} else {
+		msgReq.Export(cfgPath[3])
+	}
+	defer bc.DB.Close()
 }
